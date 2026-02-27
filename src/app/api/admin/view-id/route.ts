@@ -1,6 +1,8 @@
 import { adminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     console.log("[view-id] Starting ID document view request");
