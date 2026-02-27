@@ -1,6 +1,8 @@
 import { Leaf } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 /*
   (auth)/layout.tsx — wraps all auth pages (login, register, forgot password).
   Centered card layout with brand mark. No navbar or footer.
