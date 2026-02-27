@@ -20,7 +20,7 @@ import { useStateSelectorContext } from "@/features/state-selector/StateSelector
 */
 
 export default function WholesalePage() {
-  const { user } = useAuth();
+  const { isAdmin, isWholesaleApproved, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { selectedState } = useStateSelectorContext();
   const supabase = createClient();
@@ -36,19 +36,18 @@ export default function WholesalePage() {
 
   // Check authorization on mount
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
+    if (authLoading) {
       return;
     }
 
-    const isAuthorized = user.is_admin || user.is_wholesale_approved;
+    const isAuthorized = isAdmin || isWholesaleApproved;
     if (!isAuthorized) {
       setLoading(false);
       return;
     }
 
     setAuthorized(true);
-  }, [user]);
+  }, [authLoading, isAdmin, isWholesaleApproved]);
 
   // Fetch wholesale products
   useEffect(() => {
@@ -165,15 +164,11 @@ export default function WholesalePage() {
       </div>
 
       {/* Products grid */}
-      {loading ? (
-        <div className="flex justify-center items-center min-h-96">
-          <div className="animate-spin">
-            <div className="h-8 w-8 border-4 border-brand-green border-t-transparent rounded-full"></div>
-          </div>
-        </div>
-      ) : (
-        <ProductGrid products={products} />
-      )}
+      <ProductGrid 
+        products={products} 
+        loading={loading}
+        error={null}
+      />
     </div>
   );
 }
