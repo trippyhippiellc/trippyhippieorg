@@ -1,0 +1,71 @@
+{
+  "compilerOptions": {
+    ////////////////////////////////////////////////////////////////////
+    // LANGUAGE & ENVIRONMENT
+    // Sets the JS output target and available type libraries
+    ////////////////////////////////////////////////////////////////////
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    ////////////////////////////////////////////////////////////////////
+    // MODULE RESOLUTION
+    // How TypeScript finds and imports modules
+    ////////////////////////////////////////////////////////////////////
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    ////////////////////////////////////////////////////////////////////
+    // STRICT TYPE CHECKING
+    // Catches bugs before runtime — never disable these
+    ////////////////////////////////////////////////////////////////////
+    "strict": true,
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    ////////////////////////////////////////////////////////////////////
+    // NEXT.JS SPECIFICS
+    // Required for Next.js App Router + JSX
+    ////////////////////////////////////////////////////////////////////
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    ////////////////////////////////////////////////////////////////////
+    // PATH ALIASES
+    // Allows clean imports like: import { Button } from "@/components/ui/Button"
+    // instead of: import { Button } from "../../../../components/ui/Button"
+    ////////////////////////////////////////////////////////////////////
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "isolatedModules": true
+  },
+  ////////////////////////////////////////////////////////////////////
+  // FILES TO INCLUDE / EXCLUDE
+  // Next.js handles compilation — we just type-check these
+  ////////////////////////////////////////////////////////////////////
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next.config.mjs"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

@@ -1,0 +1,81 @@
+# ====================================================================
+# GITIGNORE — C:\trippyhippieorg\.gitignore
+# Files and folders that must NEVER be committed to Git.
+# ====================================================================
+
+# ====================================================================
+# CRITICAL: ENVIRONMENT VARIABLES
+# These contain API keys, secrets, and credentials.
+# Committing these could expose your Stripe keys, Supabase service
+# role key, and other sensitive data publicly.
+# ====================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ====================================================================
+# NEXT.JS BUILD OUTPUT
+# Generated automatically — never commit these
+# ====================================================================
+/.next/
+/out/
+
+# ====================================================================
+# NODE MODULES
+# Installed via npm install — never commit (too large, auto-generated)
+# ====================================================================
+/node_modules/
+
+# ====================================================================
+# VERCEL
+# Vercel deployment config (auto-generated)
+# ====================================================================
+/.vercel
+
+# ====================================================================
+# TYPESCRIPT
+# Compiled output and cache
+# ====================================================================
+*.tsbuildinfo
+next-env.d.ts
+
+# ====================================================================
+# OS FILES
+# macOS and Windows system files
+# ====================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ====================================================================
+# IDE / EDITOR
+# VS Code workspace settings (optional — some teams commit these)
+# ====================================================================
+.vscode/settings.json
+.vscode/launch.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ====================================================================
+# LOGS
+# ====================================================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ====================================================================
+# TESTING
+# ====================================================================
+/coverage/
+/.nyc_output
+
+# ====================================================================
+# SUPABASE CLI (local dev only)
+# ====================================================================
+/supabase/.branches
+/supabase/.temp

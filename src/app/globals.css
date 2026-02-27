@@ -1,0 +1,408 @@
+/*
+====================================================================
+GLOBAL CSS — src/app/globals.css
+
+This file does three things:
+  1. Loads Tailwind's base, components, and utilities layers
+  2. Defines CSS custom properties (design tokens) for brand colors,
+     spacing, and typography — used throughout the app
+  3. Sets global base styles for the HTML body and common elements
+
+Import order matters: tokens must come before any component styles.
+====================================================================
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/*
+====================================================================
+DESIGN TOKENS — CSS Custom Properties
+All brand colors, spacing, and radius values live here.
+Reference in plain CSS as: var(--color-brand-green)
+In Tailwind, use the class names defined in tailwind.config.ts.
+====================================================================
+*/
+:root {
+  /* ---- Brand Colors ---- */
+  --color-brand-green:        #7CB342;
+  --color-brand-green-light:  #9CCC65;
+  --color-brand-green-dark:   #558B2F;
+  --color-brand-green-muted:  rgba(124, 179, 66, 0.12);
+
+  --color-brand-violet:       #6B3FA0;
+  --color-brand-violet-light: #9C6FD4;
+  --color-brand-violet-dark:  #4A2870;
+  --color-brand-violet-muted: rgba(107, 63, 160, 0.12);
+
+  --color-forest:             #1A2E1A;
+  --color-forest-light:       #243D24;
+  --color-forest-dark:        #0D1A0D;
+
+  --color-smoke:              #0D1F0D;
+  --color-smoke-light:        #162816;
+  --color-smoke-glass:        rgba(13, 31, 13, 0.85);
+
+  --color-cream:              #F5F0E8;
+  --color-cream-muted:        #C8C0B0;
+  --color-cream-dark:         #8A8070;
+
+  /* ---- Background & Foreground (light mode defaults) ---- */
+  --background:    #FFFFFF;
+  --foreground:    #0D1A0D;
+  --card:          #F9FAFB;
+  --card-border:   rgba(0, 0, 0, 0.08);
+  --input-border:  rgba(0, 0, 0, 0.15);
+  --muted:         #F3F4F6;
+  --muted-fg:      #6B7280;
+
+  /* ---- Fonts ---- */
+  --font-display: 'Cinzel', 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', 'Outfit', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ---- Spacing scale ---- */
+  --section-padding-y: clamp(4rem, 8vw, 8rem);
+  --container-max:     1280px;
+  --container-pad:     clamp(1rem, 5vw, 2rem);
+
+  /* ---- Radius ---- */
+  --radius-sm:    0.375rem;
+  --radius:       0.625rem;
+  --radius-card:  1rem;
+  --radius-pill:  9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-card:       0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 8px 40px rgba(0,0,0,0.12);
+  --shadow-glow-green: 0 0 20px rgba(124,179,66,0.3);
+
+  /* ---- Transitions ---- */
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition:        250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/*
+====================================================================
+DARK MODE TOKENS
+Activated when <html> has class="dark"
+(Controlled by ThemeProvider — default is dark for this brand)
+====================================================================
+*/
+.dark {
+  --background:   #0D1F0D;
+  --foreground:   #F5F0E8;
+  --card:         rgba(26, 46, 26, 0.8);
+  --card-border:  rgba(124, 179, 66, 0.12);
+  --input-border: rgba(245, 240, 232, 0.15);
+  --muted:        rgba(26, 46, 26, 0.6);
+  --muted-fg:     #8A8070;
+  --shadow-card:  0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.2);
+}
+
+
+/*
+====================================================================
+BASE STYLES
+Reset and global element defaults
+====================================================================
+*/
+@layer base {
+
+  /* ---- HTML Root ---- */
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---- Body ---- */
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ---- Typography ---- */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  /* Headings in dark mode get cream color */
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: var(--color-cream);
+  }
+
+  p {
+    color: var(--foreground);
+    line-height: 1.7;
+  }
+
+  .dark p {
+    color: var(--color-cream-muted);
+  }
+
+  /* ---- Links ---- */
+  a {
+    color: var(--color-brand-green);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  a:hover {
+    color: var(--color-brand-green-light);
+  }
+
+  /* ---- Focus Styles (Accessibility) ---- */
+  *:focus-visible {
+    outline: 2px solid var(--color-brand-green);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ---- Selection ---- */
+  ::selection {
+    background-color: var(--color-brand-green-muted);
+    color: var(--color-brand-green-dark);
+  }
+
+  /* ---- Scrollbar (Webkit browsers) ---- */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-smoke);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-brand-green-dark);
+    border-radius: var(--radius-pill);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand-green);
+  }
+
+  /* ---- Images ---- */
+  img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ---- Code blocks ---- */
+  code, pre {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+}
+
+
+/*
+====================================================================
+COMPONENT UTILITIES
+Reusable class compositions that appear across many components.
+These live in @layer components so Tailwind can purge them correctly.
+====================================================================
+*/
+@layer components {
+
+  /* ---- Container ---- */
+  .container-brand {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-pad);
+    padding-right: var(--container-pad);
+  }
+
+  /* ---- Section Spacing ---- */
+  .section-padding {
+    padding-top: var(--section-padding-y);
+    padding-bottom: var(--section-padding-y);
+  }
+
+  /* ---- Glass Card ---- */
+  /* Used for product cards, modals, and panels in dark mode */
+  .glass-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(124, 179, 66, 0.2);
+    transition: box-shadow var(--transition), border-color var(--transition);
+  }
+
+  /* ---- Gradient Text ---- */
+  /* Usage: <span className="gradient-text">Trippy Hippie</span> */
+  .gradient-text {
+    background: linear-gradient(135deg, #7CB342 0%, #9CCC65 50%, #6B3FA0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+
+  /* ---- Green Glow Button Base ---- */
+  .btn-glow {
+    box-shadow: 0 0 0 rgba(124, 179, 66, 0);
+    transition: box-shadow var(--transition), transform var(--transition-fast);
+  }
+
+  .btn-glow:hover {
+    box-shadow: 0 0 24px rgba(124, 179, 66, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-glow:active {
+    transform: translateY(0);
+  }
+
+  /* ---- Input Base ---- */
+  .input-brand {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius);
+    padding: 0.625rem 0.875rem;
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+  }
+
+  .input-brand::placeholder {
+    color: var(--muted-fg);
+  }
+
+  .input-brand:focus {
+    border-color: var(--color-brand-green);
+    box-shadow: 0 0 0 3px var(--color-brand-green-muted);
+  }
+
+  /* ---- Page Hero Background ---- */
+  .hero-bg {
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(107, 63, 160, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(124, 179, 66, 0.1) 0%, transparent 50%),
+      var(--background);
+  }
+
+  /* ---- Shimmer Skeleton ---- */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      rgba(124, 179, 66, 0.05) 50%,
+      var(--muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+    border-radius: var(--radius);
+  }
+
+  /* ---- Status Pill Badges ---- */
+  .badge-processing { @apply bg-amber-500/20 text-amber-400 border border-amber-500/30; }
+  .badge-pending    { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+  .badge-shipped    { @apply bg-violet-500/20 text-violet-400 border border-violet-500/30; }
+  .badge-completed  { @apply bg-green-500/20 text-green-400 border border-green-500/30; }
+  .badge-cancelled  { @apply bg-red-500/20 text-red-400 border border-red-500/30; }
+  .badge-approved   { @apply bg-green-500/20 text-green-400 border border-green-500/30; }
+  .badge-rejected   { @apply bg-red-500/20 text-red-400 border border-red-500/30; }
+  .badge-pending-status { @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30; }
+}
+
+
+/*
+====================================================================
+KEYFRAME ANIMATIONS
+Referenced by Tailwind animation utilities in tailwind.config.ts
+====================================================================
+*/
+@layer utilities {
+
+  /* Slide in from right — cart widget */
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  /* Slide out to right — cart widget close */
+  @keyframes slide-out-right {
+    from { transform: translateX(0);    opacity: 1; }
+    to   { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* Scale + fade in — modals */
+  @keyframes modal-in {
+    from { transform: scale(0.95); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* Fade up — staggered product card reveal */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Bounce — cart counter when item added */
+  @keyframes counter-bounce {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.45); }
+  }
+
+  /* Glow pulse — active highlights */
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(124, 179, 66, 0.2); }
+    50%       { box-shadow: 0 0 28px rgba(124, 179, 66, 0.6); }
+  }
+
+  /* Shimmer — skeleton loaders */
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position:  200% 0; }
+  }
+
+  /* Float — hero decorative elements */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+  }
+
+  /* Spin slow — loading indicators */
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* Stagger animation delays — for product card grids */
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 75ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 225ms; }
+  .stagger-5 { animation-delay: 300ms; }
+  .stagger-6 { animation-delay: 375ms; }
+}
