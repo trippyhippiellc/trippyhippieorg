@@ -136,7 +136,23 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
 
           {product.description && (
-            <p className="text-brand-cream-muted leading-relaxed">{product.description}</p>
+            <div className="prose prose-invert max-w-none text-brand-cream-muted space-y-3 leading-relaxed">
+              {/* Split description by double newlines for paragraphs */}
+              {product.description.split(/\n\n+/).map((paragraph, idx) => (
+                <p key={idx} className="whitespace-pre-wrap">
+                  {/* Support **bold** syntax, but also display newlines */}
+                  {paragraph.split(/(\*\*[^*]*\*\*)/g).map((part, i) => 
+                    part.startsWith('**') ? (
+                      <strong key={i} className="text-brand-cream font-semibold">
+                        {part.slice(2, -2)}
+                      </strong>
+                    ) : (
+                      part
+                    )
+                  )}
+                </p>
+              ))}
+            </div>
           )}
 
           {product.tags && product.tags.length > 0 && (
@@ -172,13 +188,33 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             {product.weight_grams != null && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-brand-cream-dark">Weight</span>
-                <span className="text-brand-cream">{product.weight_grams}g</span>
+                <span className="text-brand-cream font-medium">{product.weight_grams}g</span>
+              </div>
+            )}
+            {product.thca_percentage != null && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-brand-cream-dark">THCa Content</span>
+                <span className="text-brand-cream font-medium text-brand-green">{product.thca_percentage}%</span>
+              </div>
+            )}
+            {product.strain_type && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-brand-cream-dark">Strain Type</span>
+                <span className="text-brand-cream font-medium capitalize">{product.strain_type}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-sm text-brand-cream-muted">
               <FlaskConical className="h-4 w-4 text-brand-green flex-shrink-0" />
               Third-party lab tested — COA available upon request
             </div>
+
+            {/* Category & Subcategory */}
+            {product.subcategory && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-brand-cream-dark">Product Type</span>
+                <span className="text-brand-cream capitalize">{product.category} · {product.subcategory}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

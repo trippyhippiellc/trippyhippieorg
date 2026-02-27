@@ -79,7 +79,10 @@ export function ReviewList({ productId, averageRating, reviewCount }: ReviewList
 
       {/* Review form */}
       {showForm && (
-        <div className="glass-card border border-brand-green/10 p-6 rounded-card">
+        <div className="glass-card border border-brand-green/10 p-6 rounded-card space-y-3">
+          <p className="text-xs text-brand-cream-dark">
+            ℹ Only customers who have purchased this product can leave reviews. Your review will be approved by our team before appearing.
+          </p>
           <ReviewForm productId={productId} onSuccess={() => { setShowForm(false); loadReviews(true); }} />
         </div>
       )}

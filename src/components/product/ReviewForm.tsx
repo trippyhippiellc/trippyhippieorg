@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Star } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
@@ -31,19 +30,32 @@ export function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     setLoading(true);
     setError("");
 
-    const client = createClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: dbErr } = await (client.from("reviews") as any).insert({
-      product_id: productId,
-      user_id:    user.id,
-      rating,
-      title:      title || null,
-      body:       body  || null,
-    });
+    try {
+      const response = await fetch("/api/reviews/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          rating,
+          title: title || undefined,
+          body: body || undefined,
+        }),
+      });
 
-    if (dbErr) setError(dbErr.message);
-    else { setSuccess(true); onSuccess?.(); }
-    setLoading(false);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to submit review");
+        return;
+      }
+
+      setSuccess(true);
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit review");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (success) {
