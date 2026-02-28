@@ -31,6 +31,7 @@ interface OrderDetail {
     phone: string;
   };
   payment_method: string;
+  payment_status: string;
   status: string;
   items: any[];
   created_at: string;
@@ -58,6 +59,7 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [paymentStatusUpdating, setPaymentStatusUpdating] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -106,6 +108,25 @@ export default function AdminOrderDetailPage() {
       console.error(err);
     } finally {
       setStatusUpdating(false);
+    }
+  };
+
+  const handlePaymentStatusUpdate = async (newPaymentStatus: string) => {
+    if (!order) return;
+    
+    setPaymentStatusUpdating(true);
+    try {
+      const { error } = await (supabase.from("orders") as any).update({ payment_status: newPaymentStatus }).eq("id", order.id);
+
+      if (error) throw error;
+
+      setOrder({ ...order, payment_status: newPaymentStatus });
+      toast.success("Payment status updated");
+    } catch (err) {
+      toast.error("Failed to update payment status");
+      console.error(err);
+    } finally {
+      setPaymentStatusUpdating(false);
     }
   };
 
@@ -252,6 +273,21 @@ export default function AdminOrderDetailPage() {
               className="w-full text-sm bg-[#162816] border border-white/10 rounded-card text-brand-cream px-3 py-2 focus:outline-none focus:border-brand-green disabled:opacity-50"
             >
               {["pending","awaiting_payment","processing","shipped","completed","cancelled","refunded"].map(s => (
+                <option key={s} value={s}>{s.replace("_", " ")}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Payment Status Management */}
+          <div className="glass-card border border-white/10 rounded-card p-6">
+            <h3 className="font-semibold text-brand-cream mb-4">Update Payment Status</h3>
+            <select
+              value={order.payment_status}
+              onChange={(e) => handlePaymentStatusUpdate(e.target.value)}
+              disabled={paymentStatusUpdating}
+              className="w-full text-sm bg-[#162816] border border-white/10 rounded-card text-brand-cream px-3 py-2 focus:outline-none focus:border-brand-green disabled:opacity-50"
+            >
+              {["unpaid","pending","paid","failed","refunded"].map(s => (
                 <option key={s} value={s}>{s.replace("_", " ")}</option>
               ))}
             </select>

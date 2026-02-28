@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ConstructionModeSettings } from "@/components/admin/ConstructionModeSettings";
+import { FontSettings } from "@/components/admin/FontSettings";
 import { siteConfig } from "@/config/site";
 import { Settings, Save } from "lucide-react";
 
@@ -42,6 +43,9 @@ export default function AdminSettingsPage() {
 
       {/* Construction Mode - Outside Form */}
       <ConstructionModeSettings />
+
+      {/* Font Settings */}
+      <FontSettings />
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Payments */}

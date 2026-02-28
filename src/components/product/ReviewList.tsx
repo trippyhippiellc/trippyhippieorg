@@ -15,6 +15,7 @@ interface Review {
   rating:     number;
   title:      string | null;
   body:       string | null;
+  image_url:  string | null;
   created_at: string;
   profiles: { full_name: string | null } | null;
 }
@@ -26,6 +27,15 @@ interface ReviewListProps {
 }
 
 const PAGE_SIZE = 5;
+
+// Helper to truncate full name (e.g., "Austin Alberts" → "Austin A.")
+function truncateName(fullName: string | null | undefined): string {
+  if (!fullName) return "Anonymous";
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return "Anonymous";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+}
 
 export function ReviewList({ productId, averageRating, reviewCount }: ReviewListProps) {
   const supabase = createClient();
@@ -40,8 +50,9 @@ export function ReviewList({ productId, averageRating, reviewCount }: ReviewList
     const start = reset ? 0 : page * PAGE_SIZE;
     const { data } = await supabase
       .from("reviews")
-      .select("id, rating, title, body, created_at, profiles(full_name)")
+      .select("id, rating, title, body, image_url, created_at, profiles(full_name)")
       .eq("product_id", productId)
+      .eq("is_approved", true)
       .order("created_at", { ascending: false })
       .range(start, start + PAGE_SIZE - 1);
 
@@ -101,6 +112,14 @@ export function ReviewList({ productId, averageRating, reviewCount }: ReviewList
         <div className="space-y-4">
           {reviews.map(r => (
             <div key={r.id} className="glass-card border border-white/5 p-5 rounded-card">
+              {/* Image if available */}
+              {r.image_url && (
+                <div className="mb-4 rounded-card overflow-hidden border border-white/10">
+                  <img src={r.image_url} alt="Review" className="w-full h-40 object-cover" />
+                </div>
+              )}
+
+              {/* Header */}
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
@@ -108,10 +127,12 @@ export function ReviewList({ productId, averageRating, reviewCount }: ReviewList
                     {r.title && <span className="font-medium text-brand-cream text-sm">{r.title}</span>}
                   </div>
                   <p className="text-xs text-brand-cream-dark">
-                    {r.profiles?.full_name ?? "Anonymous"} · {formatDate(r.created_at)}
+                    {truncateName(r.profiles?.full_name)} · {formatDate(r.created_at)}
                   </p>
                 </div>
               </div>
+
+              {/* Body */}
               {r.body && <p className="text-sm text-brand-cream-muted leading-relaxed">{r.body}</p>}
             </div>
           ))}

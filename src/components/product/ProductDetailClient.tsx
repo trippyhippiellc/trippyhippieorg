@@ -194,7 +194,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             {product.thca_percentage != null && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-brand-cream-dark">THCa Content</span>
-                <span className="text-brand-cream font-medium text-brand-green">{product.thca_percentage}%</span>
+                <span className="font-medium text-brand-green">{product.thca_percentage}%</span>
               </div>
             )}
             {product.strain_type && (

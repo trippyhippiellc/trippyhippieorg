@@ -3,14 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/reviews/submit
- * Submit a product review with purchase verification
+ * Submit a product review with purchase verification and optional photo
  * 
- * Request body:
+ * Request body (multipart/form-data):
  * {
  *   productId: string (UUID)
  *   rating: number (1-5)
  *   title?: string
  *   body?: string
+ *   image?: File
  * }
  * 
  * Returns:
@@ -22,13 +23,6 @@ import { createClient } from "@/lib/supabase/server";
  * - 500: Server error
  */
 
-interface ReviewSubmitRequest {
-  productId: string;
-  rating: number;
-  title?: string;
-  body?: string;
-}
-
 interface OrderItem {
   product_id?: string;
   productId?: string;
@@ -37,8 +31,12 @@ interface OrderItem {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as ReviewSubmitRequest;
-    const { productId, rating, title, body: reviewBody } = body;
+    const formData = await request.formData();
+    const productId = formData.get("productId") as string;
+    const rating = parseInt(formData.get("rating") as string);
+    const title = formData.get("title") as string | null;
+    const body = formData.get("body") as string | null;
+    const imageFile = formData.get("image") as File | null;
 
     // Validation
     if (!productId) {
@@ -106,6 +104,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle image upload if provided
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      try {
+        const buffer = await imageFile.arrayBuffer();
+        const filename = `${user.id}/${productId}/${Date.now()}-${imageFile.name}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("reviews")
+          .upload(filename, buffer, {
+            contentType: imageFile.type,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error("Image upload error:", uploadError);
+          return NextResponse.json(
+            { error: "Failed to upload image" },
+            { status: 500 }
+          );
+        }
+
+        // Get permanent public URL (no expiry)
+        const { data } = supabase.storage.from("reviews").getPublicUrl(uploadData.path);
+        imageUrl = data.publicUrl;
+      } catch (err) {
+        console.error("Image processing error:", err);
+        return NextResponse.json(
+          { error: "Failed to process image" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Create the review
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: newReview, error: createError } = await (supabase.from("reviews") as any)
@@ -114,7 +146,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         rating,
         title: title || null,
-        body: reviewBody || null,
+        body: body || null,
+        image_url: imageUrl || null,
         is_approved: false, // Reviews require admin approval before display
       })
       .select()

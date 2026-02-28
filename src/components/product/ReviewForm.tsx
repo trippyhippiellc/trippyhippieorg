@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
@@ -19,9 +19,33 @@ export function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
   const [hovered, setHovered] = useState(0);
   const [title,   setTitle]   = useState("");
   const [body,    setBody]    = useState("");
+  const [image,   setImage]   = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be less than 5MB");
+      return;
+    }
+
+    setImage(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setPreview("");
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,15 +55,16 @@ export function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     setError("");
 
     try {
+      const formData = new FormData();
+      formData.append("productId", productId);
+      formData.append("rating", rating.toString());
+      if (title) formData.append("title", title);
+      if (body) formData.append("body", body);
+      if (image) formData.append("image", image);
+
       const response = await fetch("/api/reviews/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          rating,
-          title: title || undefined,
-          body: body || undefined,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -94,6 +119,35 @@ export function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
         <label className="text-sm font-medium text-brand-cream-muted">Review (optional)</label>
         <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Share your experience…" rows={4} maxLength={2000} className="w-full px-3 py-2.5 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream placeholder:text-brand-cream-dark focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 resize-none" />
       </div>
+
+      {/* Photo Upload */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-brand-cream-muted">Product Photo (optional)</label>
+        {preview ? (
+          <div className="relative rounded-brand overflow-hidden border border-white/10">
+            <img src={preview} alt="Preview" className="w-full h-48 object-cover" />
+            <button
+              type="button"
+              onClick={removeImage}
+              className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600 rounded-full p-1.5 transition-colors"
+            >
+              <X className="h-4 w-4 text-white" />
+            </button>
+          </div>
+        ) : (
+          <label className="block px-4 py-6 border-2 border-dashed border-white/20 rounded-brand cursor-pointer hover:border-white/40 hover:bg-white/5 transition-colors text-center">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <p className="text-sm text-brand-cream-muted">Click to upload a photo of the product</p>
+            <p className="text-xs text-brand-cream-dark mt-1">Max 5MB</p>
+          </label>
+        )}
+      </div>
+
       {error && <p className="text-sm text-red-400">⚠ {error}</p>}
       <Button type="submit" variant="primary" isLoading={loading}>Submit Review</Button>
     </form>
