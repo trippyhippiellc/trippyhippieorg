@@ -38,6 +38,7 @@ In Tailwind, use the class names defined in tailwind.config.ts.
 */
 :root {
   --active-font: system-ui, -apple-system, sans-serif;
+  --active-font-color: inherit;
   /* ---- Brand Colors ---- */
   --color-brand-green:        #7CB342;
   --color-brand-green-light:  #9CCC65;
@@ -146,25 +147,25 @@ Reset and global element defaults
 
   /* ---- Typography ---- */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: var(--active-font);
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
-    color: var(--foreground);
+    color: var(--active-font-color);
   }
 
-  /* Headings in dark mode get cream color */
+  /* Headings in dark mode - use active font color if set, otherwise cream */
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-    color: var(--color-cream);
+    color: var(--active-font-color, var(--color-cream));
   }
 
   p {
-    color: var(--foreground);
+    color: var(--active-font-color, var(--foreground));
     line-height: 1.7;
   }
 
   .dark p {
-    color: var(--color-cream-muted);
+    color: var(--active-font-color, var(--color-cream-muted));
   }
 
   /* ---- Links ---- */

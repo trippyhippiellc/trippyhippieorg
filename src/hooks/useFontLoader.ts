@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 
 /**
  * Hook to load and apply the active font from database
- * Call this in AppProvider or layout useEffect
+ * Applies both font-family and color
  */
 export function useFontLoader() {
   useEffect(() => {
@@ -20,20 +20,29 @@ export function useFontLoader() {
         if (!(fontSettings as any)?.active_font_id) {
           // No custom font, use default
           document.body.style.fontFamily = "system-ui, -apple-system, sans-serif";
+          document.documentElement.style.setProperty("--active-font-color", "inherit");
           return;
         }
 
-        // Get font details
+        // Get font details including color
         const { data: font } = await supabase
           .from("fonts")
-          .select("name, file_path")
+          .select("name, file_path, color")
           .eq("id", (fontSettings as any).active_font_id)
           .single();
 
         if (font as any) {
-          // Apply font directly to body
-          document.body.style.fontFamily = `'${(font as any).name}', system-ui, -apple-system, sans-serif`;
-          console.log(`Font loaded: ${(font as any).name}`);
+          const fontName = (font as any).name;
+          const fontColor = (font as any).color || "inherit";
+          
+          // Apply font to body and html
+          document.body.style.fontFamily = `'${fontName}', system-ui, -apple-system, sans-serif`;
+          document.documentElement.style.fontFamily = `'${fontName}', system-ui, -apple-system, sans-serif`;
+          
+          // Apply color via CSS variable
+          document.documentElement.style.setProperty("--active-font-color", fontColor);
+          
+          console.log(`Font loaded: ${fontName}, Color: ${fontColor}`);
         }
       } catch (err) {
         console.error("Font loader error:", err);

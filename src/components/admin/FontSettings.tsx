@@ -10,14 +10,17 @@ interface Font {
   name: string;
   file_path: string;
   description: string | null;
+  color: string | null;
 }
 
 export function FontSettings() {
   const supabase = createClient();
   const [fonts, setFonts] = useState<Font[]>([]);
   const [activeFontId, setActiveFontId] = useState<string | null>(null);
+  const [activeColor, setActiveColor] = useState<string>("inherit");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Load fonts and active font on mount
   useEffect(() => {
@@ -29,7 +32,7 @@ export function FontSettings() {
           .select("*")
           .order("name");
 
-        setFonts(fontsData || []);
+        setFonts((fontsData as any) || []);
 
         // Get active font
         const { data: settings } = await supabase
@@ -38,6 +41,12 @@ export function FontSettings() {
           .single();
 
         setActiveFontId((settings as any)?.active_font_id || null);
+        
+        // Load active font's color
+        if ((settings as any)?.active_font_id) {
+          const font = (fontsData as any)?.find((f: Font) => f.id === (settings as any).active_font_id);
+          setActiveColor(font?.color || "inherit");
+        }
       } catch (err) {
         console.error("Font load error:", err);
       } finally {
@@ -61,14 +70,19 @@ export function FontSettings() {
 
       setActiveFontId(fontId);
       
-      // Apply font immediately to body
+      // Get the selected font's color
       const selectedFont = fonts.find(f => f.id === fontId);
+      const fontColor = selectedFont?.color || "inherit";
+      setActiveColor(fontColor);
+      
+      // Apply font and color immediately
       if (selectedFont) {
         document.body.style.fontFamily = `'${selectedFont.name}', system-ui, -apple-system, sans-serif`;
-        document.documentElement.style.setProperty("--active-font", `'${selectedFont.name}', system-ui, -apple-system, sans-serif`);
+        document.documentElement.style.fontFamily = `'${selectedFont.name}', system-ui, -apple-system, sans-serif`;
+        document.documentElement.style.setProperty("--active-font-color", fontColor);
       } else {
         document.body.style.fontFamily = "system-ui, -apple-system, sans-serif";
-        document.documentElement.style.setProperty("--active-font", "system-ui, -apple-system, sans-serif");
+        document.documentElement.style.setProperty("--active-font-color", "inherit");
       }
 
       toast.success("Font updated");
@@ -77,6 +91,35 @@ export function FontSettings() {
       console.error(err);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleColorChange = async (newColor: string) => {
+    setUpdating(true);
+    try {
+      const response = await fetch("/api/admin/fonts/set-color", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fontId: activeFontId, color: newColor }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update color");
+
+      setActiveColor(newColor);
+      document.documentElement.style.setProperty("--active-font-color", newColor);
+      
+      // Update local font list
+      setFonts(fonts.map(f => 
+        f.id === activeFontId ? { ...f, color: newColor } : f
+      ));
+
+      toast.success("Font color updated");
+    } catch (err) {
+      toast.error("Failed to update color");
+      console.error(err);
+    } finally {
+      setUpdating(false);
+      setShowColorPicker(false);
     }
   };
 
@@ -130,7 +173,10 @@ export function FontSettings() {
                 ? "border-brand-green bg-brand-green/10"
                 : "border-white/10 hover:border-white/20"
             } disabled:opacity-50`}
-            style={{ fontFamily: `'${font.name}', system-ui, -apple-system, sans-serif` }}
+            style={{ 
+              fontFamily: `'${font.name}', system-ui, -apple-system, sans-serif`,
+              color: activeFontId === font.id && font.color && font.color !== "inherit" ? font.color : undefined
+            }}
           >
             <p className="font-semibold text-brand-cream">{font.name}</p>
             {font.description && (
@@ -139,6 +185,58 @@ export function FontSettings() {
           </button>
         ))}
       </div>
+
+      {/* Color Picker for Active Font */}
+      {activeFontId && (
+        <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-brand-cream">Font Color</label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                disabled={updating}
+                className="w-10 h-10 rounded border-2 border-white/20 cursor-pointer hover:border-white/40 transition-all disabled:opacity-50"
+                style={{ backgroundColor: activeColor === "inherit" ? "transparent" : activeColor }}
+                title="Click to pick color"
+              />
+              {activeColor !== "inherit" && (
+                <button
+                  onClick={() => handleColorChange("inherit")}
+                  disabled={updating}
+                  className="text-xs px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {showColorPicker && (
+            <div className="space-y-2">
+              <input
+                type="color"
+                value={activeColor === "inherit" ? "#000000" : activeColor}
+                onChange={(e) => handleColorChange(e.target.value)}
+                className="w-full h-10 cursor-pointer"
+                disabled={updating}
+              />
+              <div className="grid grid-cols-6 gap-2">
+                {["#FFFF00", "#FF0000", "#00FF00", "#0000FF", "#FFFFFF", "#000000"].map(color => (
+                  <button
+                    key={color}
+                    onClick={() => handleColorChange(color)}
+                    className="h-8 rounded border-2 border-white/20 hover:border-white/40 transition-all"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  >
+                    {activeColor === color && <span className="text-white">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Status */}
       {activeFontId && (
