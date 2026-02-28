@@ -61,18 +61,14 @@ export function FontSettings() {
 
       setActiveFontId(fontId);
       
-      // Apply font immediately to show preview
+      // Apply font immediately to body
       const selectedFont = fonts.find(f => f.id === fontId);
       if (selectedFont) {
-        document.documentElement.style.setProperty(
-          "--active-font",
-          `'${selectedFont.name}', system-ui, -apple-system, sans-serif`
-        );
+        document.body.style.fontFamily = `'${selectedFont.name}', system-ui, -apple-system, sans-serif`;
+        document.documentElement.style.setProperty("--active-font", `'${selectedFont.name}', system-ui, -apple-system, sans-serif`);
       } else {
-        document.documentElement.style.setProperty(
-          "--active-font",
-          "system-ui, -apple-system, sans-serif"
-        );
+        document.body.style.fontFamily = "system-ui, -apple-system, sans-serif";
+        document.documentElement.style.setProperty("--active-font", "system-ui, -apple-system, sans-serif");
       }
 
       toast.success("Font updated");

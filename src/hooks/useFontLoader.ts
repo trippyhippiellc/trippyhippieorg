@@ -19,10 +19,7 @@ export function useFontLoader() {
 
         if (!(fontSettings as any)?.active_font_id) {
           // No custom font, use default
-          document.documentElement.style.setProperty(
-            "--active-font",
-            "system-ui, -apple-system, sans-serif"
-          );
+          document.body.style.fontFamily = "system-ui, -apple-system, sans-serif";
           return;
         }
 
@@ -34,17 +31,21 @@ export function useFontLoader() {
           .single();
 
         if (font as any) {
-          // Apply font by name
-          document.documentElement.style.setProperty(
-            "--active-font",
-            `'${(font as any).name}', system-ui, -apple-system, sans-serif`
-          );
+          // Apply font directly to body
+          document.body.style.fontFamily = `'${(font as any).name}', system-ui, -apple-system, sans-serif`;
+          console.log(`Font loaded: ${(font as any).name}`);
         }
       } catch (err) {
         console.error("Font loader error:", err);
       }
     };
 
+    // Load font immediately
     loadActiveFont();
+    
+    // Also load after a short delay to ensure DOM is ready
+    const timeout = setTimeout(loadActiveFont, 100);
+    
+    return () => clearTimeout(timeout);
   }, []);
 }
