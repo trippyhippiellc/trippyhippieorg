@@ -51,6 +51,7 @@ export interface Database {
           affiliate_earnings: number;          // Accrued unpaid earnings (cents)
           id_verified: boolean;                // Has uploaded + passed ID check
           id_document_url: string | null;      // Supabase Storage URL of ID doc
+          cashapp_approved: boolean;           // Approved to use Cash App payments
           selected_state: string | null;       // 2-letter state code they selected
           created_at: string;
           updated_at: string;
@@ -70,6 +71,7 @@ export interface Database {
           affiliate_earnings?: number;
           id_verified?: boolean;
           id_document_url?: string | null;
+          cashapp_approved?: boolean;
           selected_state?: string | null;
           created_at?: string;
           updated_at?: string;

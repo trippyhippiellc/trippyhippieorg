@@ -32,7 +32,7 @@ export function CashAppPayment({
   onProcessing,
   onSuccess,
 }: CashAppPaymentProps) {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { clearCart, items, getItemPrice } = useCart();
   const [copied, setCopied] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -47,6 +47,27 @@ export function CashAppPayment({
 
   const cashappHandle = process.env.NEXT_PUBLIC_CASHAPP_HANDLE || "$TrippyHippieSmoke";
   const cashappURL = `https://cash.app/${cashappHandle}/${Number(total).toFixed(2)}`;
+
+  // Check if user is approved for Cash App payments
+  if (!profile?.cashapp_approved) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-8 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="h-16 w-16 rounded-full bg-red-500/15 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-display font-bold text-brand-cream mb-2">
+            Cash App Payments Disabled
+          </h3>
+          <p className="text-brand-cream/60">
+            Cash App payments are currently disabled for your account. Please contact support for more information.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cashappHandle);

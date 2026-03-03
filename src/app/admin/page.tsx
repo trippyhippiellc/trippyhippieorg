@@ -42,6 +42,12 @@ interface Stats {
   approvedWholesale: number;
   pendingAffiliate:  number;
   approvedAffiliate: number;
+  // Inventory Analytics
+  totalInventoryValue:     number;
+  totalInventoryCount:     number;
+  potentialProfit:         number;
+  averageMargin:           number;
+  averageProductPrice:     number;
 }
 
 interface RecentOrder {
@@ -85,10 +91,10 @@ export default function AdminDashboard() {
     setRefreshing(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any;
-    const [ordersRes, usersRes, productsRes, wholesaleRes, affiliateRes, recentRes] = await Promise.all([
+    const [ordersRes, usersRes, productsWithPriceRes, wholesaleRes, affiliateRes, recentRes] = await Promise.all([
       db.from("orders").select("id, total, status, created_at"),
       db.from("profiles").select("account_status"),
-      db.from("products").select("id, is_active, stock_quantity"),
+      db.from("products").select("id, is_active, stock_quantity, price_retail, price_wholesale"),
       db.from("wholesale_applications").select("status"),
       db.from("affiliate_applications").select("status"),
       db.from("orders")
@@ -98,11 +104,24 @@ export default function AdminDashboard() {
     ]);
     const orders    = (ordersRes.data    ?? []) as { id:string; total:number; status:string; created_at:string }[];
     const users     = (usersRes.data     ?? []) as { account_status:string }[];
-    const products  = (productsRes.data  ?? []) as { id:string; is_active:boolean; stock_quantity:number }[];
+    const productsWithPrice = (productsWithPriceRes.data ?? []) as { id:string; is_active:boolean; stock_quantity:number; price_retail:number; price_wholesale:number | null }[];
     const wholesale = (wholesaleRes.data ?? []) as { status:string }[];
     const affiliate = (affiliateRes.data ?? []) as { status:string }[];
     const now       = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Calculate inventory analytics
+    const totalInventoryValue = productsWithPrice.reduce((sum, p) => sum + (p.stock_quantity * p.price_retail), 0);
+    const totalInventoryCount = productsWithPrice.reduce((sum, p) => sum + p.stock_quantity, 0);
+    const potentialProfit = totalInventoryValue; // We don't have cost basis, so potential revenue equals inventory value
+    const activeProductCount = productsWithPrice.filter(p => p.is_active).length;
+    const avgPrice = activeProductCount > 0 ? productsWithPrice.filter(p => p.is_active).reduce((sum, p) => sum + p.price_retail, 0) / activeProductCount : 0;
+    const marginEstimate = productsWithPrice.filter(p => p.is_active && p.price_wholesale).length > 0
+      ? (productsWithPrice.filter(p => p.is_active && p.price_wholesale)
+          .reduce((sum, p) => sum + ((p.price_retail - p.price_wholesale!) / p.price_retail * 100), 0) / 
+          productsWithPrice.filter(p => p.is_active && p.price_wholesale).length)
+      : 0;
+
     setStats({
       totalOrders:       orders.length,
       pendingOrders:     orders.filter(o => o.status === "pending").length,
@@ -116,13 +135,19 @@ export default function AdminDashboard() {
       totalUsers:        users.length,
       pendingUsers:      users.filter(u => u.account_status === "pending").length,
       approvedUsers:     users.filter(u => u.account_status === "approved").length,
-      totalProducts:     products.length,
-      activeProducts:    products.filter(p => p.is_active).length,
-      outOfStock:        products.filter(p => p.stock_quantity <= 0).length,
+      totalProducts:     productsWithPrice.length,
+      activeProducts:    productsWithPrice.filter(p => p.is_active).length,
+      outOfStock:        productsWithPrice.filter(p => p.stock_quantity <= 0).length,
       pendingWholesale:  wholesale.filter(w => w.status === "pending").length,
       approvedWholesale: wholesale.filter(w => w.status === "approved").length,
       pendingAffiliate:  affiliate.filter(a => a.status === "pending").length,
       approvedAffiliate: affiliate.filter(a => a.status === "approved").length,
+      // Inventory Analytics
+      totalInventoryValue: totalInventoryValue,
+      totalInventoryCount: totalInventoryCount,
+      potentialProfit: potentialProfit,
+      averageMargin: Math.round(marginEstimate * 100) / 100,
+      averageProductPrice: avgPrice,
     });
     setRecentOrders((recentRes.data ?? []) as RecentOrder[]);
     setLastRefreshed(new Date());
@@ -154,6 +179,10 @@ export default function AdminDashboard() {
     { label: "In Transit",      value: stats.shippedOrders.toString(),    sub: `${stats.processingOrders} processing`,        icon: TrendingUp, color: "text-sky-400",    bg: "bg-sky-500/10",    border: "border-sky-500/20",    href: "/admin/orders" },
     { label: "Wholesale Apps",  value: stats.pendingWholesale.toString(), sub: `${stats.approvedWholesale} approved total`,   icon: Building2,  color: stats.pendingWholesale > 0 ? "text-amber-400" : "text-violet-400", bg: stats.pendingWholesale > 0 ? "bg-amber-500/10" : "bg-violet-500/10", border: stats.pendingWholesale > 0 ? "border-amber-500/20" : "border-violet-500/20", href: "/admin/wholesale" },
     { label: "Affiliate Apps",  value: stats.pendingAffiliate.toString(), sub: `${stats.approvedAffiliate} approved total`,   icon: Star,       color: stats.pendingAffiliate > 0 ? "text-amber-400" : "text-brand-green", bg: stats.pendingAffiliate > 0 ? "bg-amber-500/10" : "bg-brand-green/10", border: stats.pendingAffiliate > 0 ? "border-amber-500/20" : "border-brand-green/20", href: "/admin/affiliates" },
+    // Inventory Analytics
+    { label: "Inventory Value",    value: fmt(stats.totalInventoryValue),              sub: `${stats.totalInventoryCount} total units`,    icon: Package,    color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", href: "/admin/products" },
+    { label: "Potential Profit",   value: fmt(stats.potentialProfit),                   sub: "Based on current inventory",                  icon: TrendingUp, color: "text-brand-green", bg: "bg-brand-green/10", border: "border-brand-green/20", href: "/admin/products" },
+    { label: "Avg. Margin %",      value: `${stats.averageMargin.toFixed(1)}%`,         sub: `Avg price: ${fmt(stats.averageProductPrice)}`, icon: DollarSign, color: "text-cyan-400",    bg: "bg-cyan-500/10",   border: "border-cyan-500/20",   href: "/admin/products" },
   ] : [];
 
   const alerts = stats ? [

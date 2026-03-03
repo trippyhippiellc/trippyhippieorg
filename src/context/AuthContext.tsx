@@ -42,6 +42,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   isWholesaleApproved: boolean;
   isAffiliate: boolean;
+  isCashAppApproved: boolean;
   isAccountApproved: boolean; // account_status === "approved"
   isAccountPending: boolean;  // account_status === "pending"
 
@@ -165,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = profile?.is_admin === true;
   const isWholesaleApproved = profile?.is_wholesale_approved === true;
   const isAffiliate = profile?.is_affiliate === true;
+  const isCashAppApproved = profile?.cashapp_approved === true;
   const isAccountApproved = profile?.account_status === "approved";
   const isAccountPending = profile?.account_status === "pending";
 
@@ -181,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin,
     isWholesaleApproved,
     isAffiliate,
+    isCashAppApproved,
     isAccountApproved,
     isAccountPending,
     signOut,

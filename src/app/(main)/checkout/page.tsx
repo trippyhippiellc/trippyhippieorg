@@ -32,7 +32,7 @@ type PaymentMethod = "cashapp" | "stripe" | "crypto" | "wire" | null;
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, hasItems } = useCart();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -177,7 +177,9 @@ export default function CheckoutPage() {
                 description="Send directly from your phone"
                 isSelected={selectedMethod === "cashapp"}
                 onClick={() => handlePaymentMethodSelect("cashapp")}
-                badge="Instant"
+                badge={profile?.cashapp_approved ? "Instant" : undefined}
+                disabled={!profile?.cashapp_approved}
+                disabledMessage={profile?.cashapp_approved ? undefined : "Cash App Payments are currently Disabled"}
               />
 
               {/* Card Payment */}
@@ -269,6 +271,8 @@ interface PaymentMethodCardProps {
   onClick: () => void;
   badge?: string;
   comingSoon?: boolean;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 function PaymentMethodCard({
@@ -279,11 +283,13 @@ function PaymentMethodCard({
   onClick,
   badge,
   comingSoon,
+  disabled,
+  disabledMessage,
 }: PaymentMethodCardProps) {
   return (
     <button
       onClick={onClick}
-      disabled={comingSoon}
+      disabled={comingSoon || disabled}
       className={`relative p-6 rounded-lg border-2 transition-all text-left ${
         isSelected
           ? "border-brand-green bg-brand-green/15 shadow-lg shadow-brand-green/20"
@@ -309,7 +315,13 @@ function PaymentMethodCard({
         </div>
       )}
       
-      {comingSoon && (
+      {disabledMessage && (
+        <div className="mt-3 text-xs font-semibold text-brand-cream/40">
+          {disabledMessage}
+        </div>
+      )}
+      
+      {comingSoon && !disabledMessage && (
         <div className="mt-3 text-xs font-semibold text-brand-cream/40">
           Coming Soon
         </div>

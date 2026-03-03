@@ -197,10 +197,11 @@ export default function AdminUsersPage() {
 
                     <div className="flex flex-wrap gap-4">
                       {([
-                        { field: "is_admin",     label: "Admin" },
-                        { field: "is_wholesale", label: "Wholesale" },
-                        { field: "is_affiliate", label: "Affiliate" },
-                        { field: "id_verified",  label: "ID Verified" },
+                        { field: "is_admin",          label: "Admin" },
+                        { field: "is_wholesale",      label: "Wholesale" },
+                        { field: "is_affiliate",      label: "Affiliate" },
+                        { field: "id_verified",       label: "ID Verified" },
+                        { field: "cashapp_approved",  label: "Cash App Approved" },
                       ] as const).map(({ field, label }) => (
                         <label key={field} className="flex items-center gap-2 cursor-pointer">
                           <input

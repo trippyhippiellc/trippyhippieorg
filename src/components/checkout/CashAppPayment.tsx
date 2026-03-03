@@ -1,6 +1,6 @@
 "use client";
 
-import { Smartphone, Copy, CheckCircle } from "lucide-react";
+import { Smartphone, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { siteConfig } from "@/config/site";
 import { formatCurrency } from "@/lib/utils/cn";
@@ -10,10 +10,25 @@ import { formatCurrency } from "@/lib/utils/cn";
 interface CashAppPaymentProps {
   total: number;
   orderNumber: string;
+  isApproved?: boolean;
 }
 
-export function CashAppPayment({ total, orderNumber }: CashAppPaymentProps) {
+export function CashAppPayment({ total, orderNumber, isApproved = true }: CashAppPaymentProps) {
   const [copied, setCopied] = useState(false);
+
+  if (!isApproved) {
+    return (
+      <div className="space-y-5">
+        <div className="p-5 rounded-card bg-red-500/5 border border-red-500/20 text-center">
+          <div className="w-14 h-14 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-3">
+            <AlertCircle className="h-7 w-7 text-red-500" />
+          </div>
+          <h3 className="font-display font-bold text-brand-cream text-xl mb-1">Cash App Payments Disabled</h3>
+          <p className="text-brand-cream-muted text-sm">Cash App payments are currently disabled for your account. Please contact support for more information.</p>
+        </div>
+      </div>
+    );
+  }
 
   function copyHandle() {
     navigator.clipboard.writeText(siteConfig.cashAppHandle);
