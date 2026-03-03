@@ -435,7 +435,8 @@ export default function AdminProductsPage() {
 
             <div>
               <p className="text-sm font-medium text-brand-cream-muted mb-3">Pricing (enter in dollars, e.g. 25.00)</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Input label="Buy Cost ($)"         type="number" step="0.01" min="0" value={form.buy_cost}        onChange={e => setField("buy_cost",        e.target.value)} placeholder="12.00" />
                 <Input label="Retail Price ($) *"   type="number" step="0.01" min="0" value={form.price_retail}    onChange={e => setField("price_retail",    e.target.value)} placeholder="25.00" required />
                 <Input label="Wholesale Price ($)"  type="number" step="0.01" min="0" value={form.price_wholesale} onChange={e => setField("price_wholesale", e.target.value)} placeholder="18.00" />
                 <Input label="Compare-At Price ($)" type="number" step="0.01" min="0" value={form.price_compare}   onChange={e => setField("price_compare",   e.target.value)} placeholder="32.00" />
@@ -449,22 +450,6 @@ export default function AdminProductsPage() {
               <Input label="Tags (comma)" value={form.tags} onChange={e => setField("tags", e.target.value)} placeholder="premium, indoor" />
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-brand-cream-muted">Bulk Discount Tiers</label>
-                <button type="button" onClick={addTier} className="text-xs text-brand-green hover:underline flex items-center gap-1"><Plus className="h-3 w-3" /> Add Tier</button>
-              </div>
-              {form.bulk_tiers.map((tier, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_2fr_auto] gap-2 items-end">
-                  <Input label={i===0 ? "Min Qty" : undefined}               type="number" min="1"            value={tier.quantity.toString()}         onChange={e => updateTier(i,"quantity",        e.target.value)} />
-                  <Input label={i===0 ? "Discount %" : undefined}            type="number" min="0" max="100"  value={tier.discount_percent.toString()} onChange={e => updateTier(i,"discount_percent",e.target.value)} />
-                  <Input label={i===0 ? "Label (shown to customer)" : undefined}                               value={tier.label}                       onChange={e => updateTier(i,"label",e.target.value)} />
-                  <button type="button" onClick={() => removeTier(i)} className="mb-0.5 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-brand transition-colors"><X className="h-3.5 w-3.5" /></button>
-                </div>
-              ))}
-              {form.bulk_tiers.length === 0 && <p className="text-xs text-brand-cream-dark">No tiers — product will not show bulk discounts.</p>}
-            </div>
-
             <div className="flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.is_active}   onChange={e => setField("is_active",   e.target.checked)} className="accent-brand-green" />
@@ -474,7 +459,64 @@ export default function AdminProductsPage() {
                 <input type="checkbox" checked={form.is_featured} onChange={e => setField("is_featured", e.target.checked)} className="accent-brand-green" />
                 <span className="text-sm text-brand-cream-muted">Featured (shown on homepage)</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.enable_bulk_pricing} onChange={e => setField("enable_bulk_pricing", e.target.checked)} className="accent-brand-green" />
+                <span className="text-sm text-brand-cream-muted">Enable Bulk Pricing (show tiers)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.has_variants} onChange={e => setField("has_variants", e.target.checked)} className="accent-brand-green" />
+                <span className="text-sm text-brand-cream-muted">Has Variants (strains, options)</span>
+              </label>
             </div>
+
+            {form.has_variants && (
+              <div className="space-y-3 p-4 rounded-brand bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-brand-cream-muted">Product Variants</label>
+                  <button type="button" onClick={() => {
+                    const id = Math.random().toString(36).substring(7);
+                    setForm(prev => ({ ...prev, variants: [...prev.variants, { id, name: "", image: "", price_retail: form.price_retail, price_wholesale: form.price_wholesale, stock_quantity: form.stock_quantity }] }));
+                  }} className="text-xs text-brand-green hover:underline flex items-center gap-1"><Plus className="h-3 w-3" /> Add Variant</button>
+                </div>
+                {form.variants.map((variant, i) => (
+                  <div key={variant.id} className="space-y-2 p-3 rounded-brand bg-white/5 border border-white/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input label="Variant Name (strain, strength, etc)" value={variant.name} onChange={e => {
+                        setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, name: e.target.value } : v) }));
+                      }} placeholder="Blue Dream" />
+                      <Input label="Variant Image URL" value={variant.image} onChange={e => {
+                        setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, image: e.target.value } : v) }));
+                      }} placeholder="https://..." />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs text-brand-cream-dark">
+                      <span>Price Retail: ${(Number(variant.price_retail) / 100 || form.price_retail).toFixed(2)}</span>
+                      <span>Price Wholesale: ${(Number(variant.price_wholesale) / 100 || form.price_wholesale).toFixed(2)}</span>
+                      <span>Stock: {variant.stock_quantity}</span>
+                    </div>
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, variants: prev.variants.filter((_, idx) => idx !== i) }))} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"><X className="h-3 w-3" /> Remove Variant</button>
+                  </div>
+                ))}
+                {form.variants.length === 0 && <p className="text-xs text-brand-cream-dark italic">Click "Add Variant" to create variant options.</p>}
+              </div>
+            )}
+
+            {form.enable_bulk_pricing && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-brand-cream-muted">Bulk Discount Tiers</label>
+                  <button type="button" onClick={addTier} className="text-xs text-brand-green hover:underline flex items-center gap-1"><Plus className="h-3 w-3" /> Add Tier</button>
+                </div>
+                {form.bulk_tiers.map((tier, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_1fr_2fr_auto] gap-2 items-end">
+                    <Input label={i===0 ? "Min Qty" : undefined}               type="number" min="1"            value={tier.quantity.toString()}         onChange={e => updateTier(i,"quantity",        e.target.value)} />
+                    <Input label={i===0 ? "Discount %" : undefined}            type="number" min="0" max="100"  value={tier.discount_percent.toString()} onChange={e => updateTier(i,"discount_percent",e.target.value)} />
+                    <Input label={i===0 ? "Label (shown to customer)" : undefined}                               value={tier.label}                       onChange={e => updateTier(i,"label",e.target.value)} />
+                    <button type="button" onClick={() => removeTier(i)} className="mb-0.5 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-brand transition-colors"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                ))}
+                {form.bulk_tiers.length === 0 && <p className="text-xs text-brand-cream-dark">No tiers configured.</p>}
+              </div>
+            )}
 
             <div className="flex gap-3 pt-1">
               <Button type="submit" variant="primary" isLoading={saving} leftIcon={<CheckCircle className="h-4 w-4" />}>{editingId ? "Save Changes" : "Create Product"}</Button>
