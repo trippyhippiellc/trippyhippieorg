@@ -74,9 +74,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.is_featured && <Badge variant="featured">Featured</Badge>}
           {isOutOfStock        && <Badge variant="cancelled">Sold Out</Badge>}
-          {isWholesaleMode && product.price_wholesale && (
-            <Badge variant="wholesale">WHL</Badge>
-          )}
         </div>
 
         {!isOutOfStock && (
@@ -120,10 +117,19 @@ export function ProductCard({ product, className }: ProductCardProps) {
           reviewCount={product.review_count}
         />
 
-        <div className="flex items-baseline gap-2 pt-1">
-          <span className="font-bold text-base text-brand-green">
-            {formatCurrency(basePrice)}
-          </span>
+        <div className="flex flex-col gap-1 pt-1">
+          {isWholesaleMode && product.price_wholesale ? (
+            <>
+              <span className="text-xs text-brand-cream-dark">Wholesale Price</span>
+              <span className="font-bold text-base text-brand-green">
+                {formatCurrency(basePrice)}
+              </span>
+            </>
+          ) : (
+            <span className="font-bold text-base text-brand-green">
+              {formatCurrency(basePrice)}
+            </span>
+          )}
           {isOnSale && product.price_compare && (
             <span className="text-xs text-brand-cream-dark line-through">
               {formatCurrency(product.price_compare)}

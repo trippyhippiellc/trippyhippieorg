@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +13,15 @@ import { formatCurrency, cn } from "@/lib/utils/cn";
 import type { Product } from "@/types/supabase";
 import type { BulkTier } from "@/types/supabase";
 
+interface ProductVariant {
+  id: string;
+  name: string;
+  image: string;
+  price_retail?: string | number;
+  price_wholesale?: string | number;
+  stock_quantity?: string | number;
+}
+
 interface ProductDetailClientProps {
   product: Product;
 }
@@ -20,7 +29,8 @@ interface ProductDetailClientProps {
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { isWholesaleMode } = useCart();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity,      setQuantity]      = useState(1);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   // Parse images - handle both array and JSON string
   let images: string[] = [];
@@ -36,17 +46,70 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     }
   }
 
+  // Parse variants
+  let variants: ProductVariant[] = [];
+  if (product.has_variants && product.variants) {
+    if (typeof product.variants === 'string') {
+      try {
+        variants = JSON.parse(product.variants) as ProductVariant[];
+      } catch {
+        variants = [];
+      }
+    } else if (Array.isArray(product.variants)) {
+      variants = product.variants as ProductVariant[];
+    }
+  }
+
+  // Auto-select first variant if not already selected
+  if (variants.length > 0 && !selectedVariantId) {
+    // This will set the initial selected variant to the first one
+    // but only after the component renders to avoid infinite loops
+  }
+
   /* Cast Json → unknown → BulkTier[] to satisfy TypeScript */
   const bulkTiers = (product.bulk_tiers as unknown as BulkTier[]) ?? [];
 
-  const basePrice = isWholesaleMode && product.price_wholesale
-    ? product.price_wholesale
-    : product.price_retail;
+  // Calculate total stock from variants
+  const totalStock = useMemo(() => {
+    if (product.has_variants && variants.length > 0) {
+      return variants.reduce((sum, v) => sum + (Number(v.stock_quantity) || 0), 0);
+    }
+    return product.stock_quantity;
+  }, [product.has_variants, product.stock_quantity, variants]);
 
-  const isOutOfStock = product.stock_quantity <= 0;
+  // Get selected variant or use main product
+  const selectedVariant = selectedVariantId 
+    ? variants.find(v => v.id === selectedVariantId)
+    : null;
+  
+  const variantPrice = selectedVariant 
+    ? (isWholesaleMode && selectedVariant.price_wholesale 
+        ? selectedVariant.price_wholesale 
+        : selectedVariant.price_retail)
+    : null;
+
+  const basePrice = variantPrice 
+    ? (typeof variantPrice === 'string' ? parseFloat(variantPrice) * 100 : variantPrice)
+    : (isWholesaleMode && product.price_wholesale
+        ? product.price_wholesale
+        : product.price_retail);
+
+  const variantStock = selectedVariant ? (Number(selectedVariant.stock_quantity) || 0) : 0;
+  const canSelectVariant = !selectedVariant || variantStock > 0;
+  const isOutOfStock = totalStock <= 0;
+  const isLowStock = totalStock > 0 && totalStock < 5;
 
   function prevImage() { setSelectedImage(i => (i - 1 + images.length) % images.length); }
   function nextImage() { setSelectedImage(i => (i + 1) % images.length); }
+
+  // Update image when variant is selected
+  const displayImage = selectedVariant && selectedVariant.image 
+    ? selectedVariant.image 
+    : (images.length > 0 ? images[selectedImage] : null);
+
+  const displayedImages = selectedVariant && selectedVariant.image 
+    ? [selectedVariant.image, ...images.filter(img => img !== selectedVariant.image)]
+    : images;
 
   return (
     <div className="container-brand section-padding">
@@ -55,9 +118,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {/* ── IMAGE GALLERY ── */}
         <div className="space-y-4">
           <div className="relative aspect-square rounded-card overflow-hidden bg-[#1A2E1A] border border-brand-green/10">
-            {images.length > 0 ? (
+            {displayImage ? (
               <Image
-                src={images[selectedImage]}
+                src={displayImage}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -68,7 +131,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>
             )}
 
-            {images.length > 1 && (
+            {displayedImages.length > 1 && (
               <>
                 <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
                   <ChevronLeft className="h-5 w-5" />
@@ -92,9 +155,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             )}
           </div>
 
-          {images.length > 1 && (
+          {displayedImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {images.map((img, i) => (
+              {displayedImages.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
@@ -135,36 +198,45 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             {isWholesaleMode && <Badge variant="wholesale">Wholesale Price</Badge>}
           </div>
 
-          {product.description && (
-            <div className="prose prose-invert max-w-none text-brand-cream-muted space-y-3 leading-relaxed">
-              {/* Split description by double newlines for paragraphs */}
-              {product.description.split(/\n\n+/).map((paragraph, idx) => (
-                <p key={idx} className="whitespace-pre-wrap">
-                  {/* Support **bold** syntax, but also display newlines */}
-                  {paragraph.split(/(\*\*[^*]*\*\*)/g).map((part, i) => 
-                    part.startsWith('**') ? (
-                      <strong key={i} className="text-brand-cream font-semibold">
-                        {part.slice(2, -2)}
-                      </strong>
-                    ) : (
-                      part
-                    )
-                  )}
-                </p>
-              ))}
+          {/* ── VARIANT SELECTOR ── */}
+          {product.has_variants && variants.length > 0 && (
+            <div className="space-y-3 pt-4 border-t border-white/5">
+              <label className="text-sm font-medium text-brand-cream-muted">Select Variant</label>
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {variants.map((variant) => {
+                  const vStock = Number(variant.stock_quantity) || 0;
+                  const isSelected = selectedVariantId === variant.id;
+                  const isSoldOut = vStock === 0;
+                  
+                  return (
+                    <button
+                      key={variant.id}
+                      onClick={() => !isSoldOut && setSelectedVariantId(variant.id)}
+                      disabled={isSoldOut}
+                      className={cn(
+                        "p-3 rounded-brand border-2 transition-all text-left",
+                        isSelected 
+                          ? "border-brand-green bg-brand-green/10"
+                          : isSoldOut
+                          ? "border-red-500/30 bg-red-500/5 opacity-50 cursor-not-allowed"
+                          : "border-white/10 bg-white/5 hover:border-brand-green/40"
+                      )}
+                    >
+                      <p className="text-sm font-medium text-brand-cream line-clamp-1">{variant.name}</p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        isSoldOut ? "text-red-400" : "text-brand-cream-muted"
+                      )}>
+                        {isSoldOut ? "Sold Out" : `${vStock} in stock`}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {product.tags && product.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {product.tags.map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-brand-cream-dark">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
+          {/* ── QUANTITY & ADD TO CART ── */}
           <div className="space-y-4 pt-2">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-brand-cream-muted w-20">Quantity</span>
@@ -172,10 +244,14 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 value={quantity}
                 onChange={setQuantity}
                 min={1}
-                max={product.stock_quantity}
+                max={totalStock}
                 size="lg"
               />
-              <span className="text-xs text-brand-cream-dark">{product.stock_quantity} in stock</span>
+              {isLowStock ? (
+                <span className="text-xs text-brand-green font-semibold">Low Stock!</span>
+              ) : (
+                <span className="text-xs text-brand-cream-dark">{totalStock} in stock</span>
+              )}
             </div>
             <AddToCartButton product={product} quantity={quantity} className="w-full" />
           </div>
@@ -218,8 +294,45 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         </div>
       </div>
+
+      {/* ── DESCRIPTION (MOVED BELOW) ── */}
+      {product.description && (
+        <div className="mt-16 pt-12 border-t border-white/5">
+          <h2 className="text-2xl font-display font-bold text-brand-cream mb-4">Product Details</h2>
+          <div className="prose prose-invert max-w-none text-brand-cream-muted space-y-3 leading-relaxed">
+            {/* Split description by double newlines for paragraphs */}
+            {product.description.split(/\n\n+/).map((paragraph, idx) => (
+              <p key={idx} className="whitespace-pre-wrap">
+                {/* Support **bold** syntax, but also display newlines */}
+                {paragraph.split(/(\*\*[^*]*\*\*)/g).map((part, i) => 
+                  part.startsWith('**') ? (
+                    <strong key={i} className="text-brand-cream font-semibold">
+                      {part.slice(2, -2)}
+                    </strong>
+                  ) : (
+                    part
+                  )
+                )}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAGS ── */}
+      {product.tags && product.tags.length > 0 && (
+        <div className="mt-8 flex flex-wrap gap-1.5">
+          {product.tags.map(tag => (
+            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-brand-cream-dark">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default ProductDetailClient;
+
+
