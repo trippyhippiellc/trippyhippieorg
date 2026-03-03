@@ -488,12 +488,20 @@ export default function AdminProductsPage() {
                         setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, image: e.target.value } : v) }));
                       }} placeholder="https://..." />
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs text-brand-cream-dark">
-                      <span>Price Retail: ${(Number(variant.price_retail) / 100 || form.price_retail).toFixed(2)}</span>
-                      <span>Price Wholesale: ${(Number(variant.price_wholesale) / 100 || form.price_wholesale).toFixed(2)}</span>
-                      <span>Stock: {variant.stock_quantity}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <Input label="Price Retail ($)" type="number" step="0.01" value={variant.price_retail} onChange={e => {
+                        setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, price_retail: e.target.value } : v) }));
+                      }} placeholder={form.price_retail || "0.00"} />
+                      <Input label="Price Wholesale ($)" type="number" step="0.01" value={variant.price_wholesale} onChange={e => {
+                        setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, price_wholesale: e.target.value } : v) }));
+                      }} placeholder={form.price_wholesale || "0.00"} />
+                      <Input label="Stock Qty" type="number" min="0" value={variant.stock_quantity} onChange={e => {
+                        setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, stock_quantity: e.target.value } : v) }));
+                      }} placeholder="0" />
+                      <div className="flex items-end">
+                        <button type="button" onClick={() => setForm(prev => ({ ...prev, variants: prev.variants.filter((_, idx) => idx !== i) }))} className="w-full py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-brand transition-colors flex items-center justify-center gap-1"><X className="h-3 w-3" /> Remove</button>
+                      </div>
                     </div>
-                    <button type="button" onClick={() => setForm(prev => ({ ...prev, variants: prev.variants.filter((_, idx) => idx !== i) }))} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"><X className="h-3 w-3" /> Remove Variant</button>
                   </div>
                 ))}
                 {form.variants.length === 0 && <p className="text-xs text-brand-cream-dark italic">Click "Add Variant" to create variant options.</p>}
