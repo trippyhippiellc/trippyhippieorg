@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, FlaskConical } from "lucide-react";
+import { ChevronLeft, ChevronRight, FlaskConical, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { QuantitySelector } from "@/components/product/QuantitySelector";
@@ -31,6 +31,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [inventoryWarning, setInventoryWarning] = useState<{ show: boolean; maxAvailable: number }>({ show: false, maxAvailable: 0 });
 
   // Parse images - handle both array and JSON string
   let images: string[] = [];
@@ -98,11 +99,12 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const canSelectVariant = !selectedVariant || variantStock > 0;
   const isOutOfStock = totalStock <= 0;
   const isLowStock = totalStock > 0 && totalStock < 5;
+  const maxQuantity = selectedVariant ? variantStock : totalStock;
 
-  function prevImage() { setSelectedImage(i => (i - 1 + images.length) % images.length); }
-  function nextImage() { setSelectedImage(i => (i + 1) % images.length); }
+  function prevImage() { setSelectedImage(i => (i - 1 + displayedImages.length) % displayedImages.length); }
+  function nextImage() { setSelectedImage(i => (i + 1) % displayedImages.length); }
 
-  // Update image when variant is selected
+  // Update image when variant is selected - IMMEDIATE
   const displayImage = selectedVariant && selectedVariant.image 
     ? selectedVariant.image 
     : (images.length > 0 ? images[selectedImage] : null);
@@ -201,8 +203,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           {/* ── VARIANT SELECTOR ── */}
           {product.has_variants && variants.length > 0 && (
             <div className="space-y-3 pt-4 border-t border-white/5">
-              <label className="text-sm font-medium text-brand-cream-muted">Select Variant</label>
-              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+              <label className="text-sm font-medium text-brand-cream-muted">Select Strain</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {variants.map((variant) => {
                   const vStock = Number(variant.stock_quantity) || 0;
                   const isSelected = selectedVariantId === variant.id;
@@ -211,24 +213,27 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   return (
                     <button
                       key={variant.id}
-                      onClick={() => !isSoldOut && setSelectedVariantId(variant.id)}
+                      onClick={() => {
+                        if (!isSoldOut) {
+                          setSelectedVariantId(variant.id);
+                          setSelectedImage(0); // Immediately show variant's first image
+                          setQuantity(1); // Reset quantity when switching variants
+                        }
+                      }}
                       disabled={isSoldOut}
                       className={cn(
-                        "p-3 rounded-brand border-2 transition-all text-left",
+                        "p-3 rounded-brand border-2 transition-all text-left min-h-20 flex flex-col justify-between",
                         isSelected 
-                          ? "border-brand-green bg-brand-green/10"
+                          ? "border-brand-green bg-brand-green/20"
                           : isSoldOut
                           ? "border-red-500/30 bg-red-500/5 opacity-50 cursor-not-allowed"
                           : "border-white/10 bg-white/5 hover:border-brand-green/40"
                       )}
                     >
-                      <p className="text-sm font-medium text-brand-cream line-clamp-1">{variant.name}</p>
-                      <p className={cn(
-                        "text-xs mt-1",
-                        isSoldOut ? "text-red-400" : "text-brand-cream-muted"
-                      )}>
-                        {isSoldOut ? "Sold Out" : `${vStock} in stock`}
-                      </p>
+                      <p className="text-sm font-medium text-brand-cream line-clamp-2">{variant.name}</p>
+                      {isSoldOut && (
+                        <p className="text-xs text-red-400 font-semibold mt-1">Sold Out</p>
+                      )}
                     </button>
                   );
                 })}
@@ -244,16 +249,56 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 value={quantity}
                 onChange={setQuantity}
                 min={1}
-                max={totalStock}
+                max={maxQuantity}
                 size="lg"
               />
-              {isLowStock ? (
+              {isLowStock && !selectedVariant && (
                 <span className="text-xs text-brand-green font-semibold">Low Stock!</span>
-              ) : (
-                <span className="text-xs text-brand-cream-dark">{totalStock} in stock</span>
               )}
             </div>
-            <AddToCartButton product={product} quantity={quantity} className="w-full" />
+
+            {/* Inventory Warning Modal */}
+            {inventoryWarning.show && (
+              <div className="p-4 rounded-brand border-2 border-brand-green/40 bg-brand-green/10 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-brand-green flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-brand-cream mb-2">
+                    Limited Stock Available
+                  </p>
+                  <p className="text-sm text-brand-cream-muted mb-3">
+                    There are currently only {inventoryWarning.maxAvailable} left in stock. Would you like to add {inventoryWarning.maxAvailable} {inventoryWarning.maxAvailable === 1 ? 'item' : 'items'} to your cart?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setQuantity(inventoryWarning.maxAvailable);
+                        setInventoryWarning({ show: false, maxAvailable: 0 });
+                      }}
+                      className="px-3 py-1.5 rounded-brand bg-brand-green text-white text-sm font-semibold hover:bg-brand-green-light transition-colors"
+                    >
+                      Yes, Add Remaining
+                    </button>
+                    <button
+                      onClick={() => setInventoryWarning({ show: false, maxAvailable: 0 })}
+                      className="px-3 py-1.5 rounded-brand border border-brand-green text-brand-green text-sm font-semibold hover:bg-brand-green/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <AddToCartButton 
+              product={product} 
+              quantity={quantity} 
+              maxAvailable={maxQuantity}
+              variantId={selectedVariantId}
+              onInventoryWarning={(maxAvailable) => {
+                setInventoryWarning({ show: true, maxAvailable });
+              }}
+              className="w-full" 
+            />
           </div>
 
           {bulkTiers.length > 0 && (

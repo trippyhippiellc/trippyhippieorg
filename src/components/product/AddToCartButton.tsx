@@ -14,20 +14,36 @@ import type { Product } from "@/types/supabase";
 interface AddToCartButtonProps {
   product: Product;
   quantity: number;
+  maxAvailable?: number;
+  variantId?: string | null;
+  onInventoryWarning?: (maxAvailable: number) => void;
   className?: string;
 }
 
-export function AddToCartButton({ product, quantity, className }: AddToCartButtonProps) {
+export function AddToCartButton({ 
+  product, 
+  quantity, 
+  maxAvailable = 0,
+  variantId,
+  onInventoryWarning,
+  className 
+}: AddToCartButtonProps) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
   function handleAdd() {
+    // Check if quantity exceeds available stock
+    if (maxAvailable > 0 && quantity > maxAvailable) {
+      onInventoryWarning?.(maxAvailable);
+      return;
+    }
+
     addItem(product, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
 
-  const outOfStock = product.stock_quantity <= 0;
+  const outOfStock = maxAvailable <= 0;
 
   return (
     <Button
