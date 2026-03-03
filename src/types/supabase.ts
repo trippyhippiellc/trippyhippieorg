@@ -106,6 +106,10 @@ export interface Database {
           tags: string[];                      // ["hemp", "thca", "indoor"]
           allowed_states: string[] | null;     // null = all states, or ["TX","FL"]
           bulk_tiers: Json | null;             // See BulkTier type below
+          buy_cost: number | null;             // Cost in cents we paid (hidden from customers)
+          enable_bulk_pricing: boolean;        // Toggle bulk pricing for this product
+          has_variants: boolean;               // Does this product have variants
+          variants: Json | null;               // Array of product variants with images and options
           average_rating: number;              // Computed from reviews (0–5)
           review_count: number;
           created_at: string;
@@ -133,6 +137,10 @@ export interface Database {
           tags?: string[];
           allowed_states?: string[] | null;
           bulk_tiers?: Json | null;
+          buy_cost?: number | null;
+          enable_bulk_pricing?: boolean;
+          has_variants?: boolean;
+          variants?: Json | null;
           average_rating?: number;
           review_count?: number;
           created_at?: string;

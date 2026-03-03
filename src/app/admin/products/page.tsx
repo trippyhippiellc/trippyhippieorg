@@ -39,6 +39,7 @@ interface ProductForm {
   price_retail:         string;
   price_wholesale:      string;
   price_compare:        string;
+  buy_cost:             string;               // New: cost we paid
   stock_quantity:       string;
   thca_percentage:      string;
   weight_grams:         string;
@@ -47,17 +48,30 @@ interface ProductForm {
   images:               string[];
   is_active:            boolean;
   is_featured:          boolean;
+  enable_bulk_pricing:  boolean;              // New: toggle bulk pricing
+  has_variants:         boolean;              // New: toggle variants
+  variants:             ProductVariant[];     // New: array of variants
   tags:                 string;
   state_restrictions:   string[];
   bulk_tiers:           BulkTier[];
 }
 
+interface ProductVariant {
+  id:             string;                    // unique id for variant
+  name:            string;                   // variant name (e.g., "Blue Dream")
+  image:           string;                   // image URL for variant
+  price_retail:    string;                   // optional: retail price override
+  price_wholesale: string;                   // optional: wholesale price override
+  stock_quantity:  string;                   // optional: stock override
+}
+
 const EMPTY: ProductForm = {
   name: "", slug: "", description: "", category: "flower", strain_type: "",
-  price_retail: "", price_wholesale: "", price_compare: "",
+  price_retail: "", price_wholesale: "", price_compare: "", buy_cost: "",
   stock_quantity: "0", thca_percentage: "", weight_grams: "",
   image_url: "", gallery_input: "", images: [],
-  is_active: true, is_featured: false, tags: "", state_restrictions: [],
+  is_active: true, is_featured: false, enable_bulk_pricing: false, has_variants: false, variants: [],
+  tags: "", state_restrictions: [],
   bulk_tiers: [
     { quantity: 2, discount_percent: 5,  label: "2 for 5% off"  },
     { quantity: 4, discount_percent: 10, label: "4 for 10% off" },
@@ -75,6 +89,7 @@ interface DBProduct {
   price_retail:         number;
   price_wholesale:      number | null;
   price_compare:        number | null;
+  buy_cost:             number | null;       // New: cost we paid
   stock_quantity:       number;
   thca_percentage:      number | null;
   weight_grams:         number | null;
@@ -84,6 +99,9 @@ interface DBProduct {
   tags:                 string[];
   state_restrictions:   string[] | null;
   bulk_tiers:           BulkTier[];
+  enable_bulk_pricing:  boolean;             // New: toggle bulk pricing
+  has_variants:         boolean;             // New: product has variants
+  variants:             ProductVariant[] | null;  // New: variant data
   created_at:           string;
   average_rating:       number;
   review_count:         number;
@@ -147,6 +165,7 @@ export default function AdminProductsPage() {
       price_retail:         String(p.price_retail / 100),
       price_wholesale:      p.price_wholesale != null ? String(p.price_wholesale / 100) : "",
       price_compare:        p.price_compare   != null ? String(p.price_compare   / 100) : "",
+      buy_cost:             p.buy_cost != null ? String(p.buy_cost / 100) : "",
       stock_quantity:       String(p.stock_quantity),
       thca_percentage:      p.thca_percentage != null ? String(p.thca_percentage) : "",
       weight_grams:         p.weight_grams    != null ? String(p.weight_grams)    : "",
@@ -155,6 +174,9 @@ export default function AdminProductsPage() {
       images:               p.images?.slice(1) ?? [],
       is_active:            p.is_active,
       is_featured:          p.is_featured,
+      enable_bulk_pricing:  p.enable_bulk_pricing ?? false,
+      has_variants:         p.has_variants ?? false,
+      variants:             Array.isArray(p.variants) ? p.variants : [],
       tags:                 (p.tags ?? []).join(", "),
       state_restrictions:   p.state_restrictions ?? [],
       bulk_tiers:           Array.isArray(p.bulk_tiers) && p.bulk_tiers.length > 0 ? p.bulk_tiers : EMPTY.bulk_tiers,
@@ -215,15 +237,19 @@ export default function AdminProductsPage() {
       price_retail:         retailCents,
       price_wholesale:      form.price_wholesale ? Math.round(parseFloat(form.price_wholesale) * 100) : null,
       price_compare:        form.price_compare   ? Math.round(parseFloat(form.price_compare)   * 100) : null,
+      buy_cost:             form.buy_cost ? Math.round(parseFloat(form.buy_cost) * 100) : null,
       stock_quantity:       parseInt(form.stock_quantity) || 0,
       thca_percentage:      form.thca_percentage ? parseFloat(form.thca_percentage) : null,
       weight_grams:         form.weight_grams    ? parseFloat(form.weight_grams)    : null,
       images:               [form.image_url.trim(), ...form.images].filter(Boolean),
       is_active:            form.is_active,
       is_featured:          form.is_featured,
+      enable_bulk_pricing:  form.enable_bulk_pricing,
+      has_variants:         form.has_variants,
+      variants:             form.has_variants && form.variants.length > 0 ? form.variants : null,
       tags:                 form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
       state_restrictions:   form.state_restrictions.length > 0 ? form.state_restrictions : null,
-      bulk_tiers:           form.bulk_tiers,
+      bulk_tiers:           form.enable_bulk_pricing ? form.bulk_tiers : null,
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any;

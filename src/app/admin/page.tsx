@@ -94,7 +94,7 @@ export default function AdminDashboard() {
     const [ordersRes, usersRes, productsWithPriceRes, wholesaleRes, affiliateRes, recentRes] = await Promise.all([
       db.from("orders").select("id, total, status, created_at"),
       db.from("profiles").select("account_status"),
-      db.from("products").select("id, is_active, stock_quantity, price_retail, price_wholesale"),
+      db.from("products").select("id, is_active, stock_quantity, price_retail, price_wholesale, buy_cost"),
       db.from("wholesale_applications").select("status"),
       db.from("affiliate_applications").select("status"),
       db.from("orders")
@@ -104,22 +104,21 @@ export default function AdminDashboard() {
     ]);
     const orders    = (ordersRes.data    ?? []) as { id:string; total:number; status:string; created_at:string }[];
     const users     = (usersRes.data     ?? []) as { account_status:string }[];
-    const productsWithPrice = (productsWithPriceRes.data ?? []) as { id:string; is_active:boolean; stock_quantity:number; price_retail:number; price_wholesale:number | null }[];
+    const productsWithPrice = (productsWithPriceRes.data ?? []) as { id:string; is_active:boolean; stock_quantity:number; price_retail:number; price_wholesale:number | null; buy_cost:number | null }[];
     const wholesale = (wholesaleRes.data ?? []) as { status:string }[];
     const affiliate = (affiliateRes.data ?? []) as { status:string }[];
     const now       = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Calculate inventory analytics
-    const totalInventoryValue = productsWithPrice.reduce((sum, p) => sum + (p.stock_quantity * p.price_retail), 0);
+    // Calculate inventory analytics with actual buy costs
+    const totalInventoryRetailValue = productsWithPrice.reduce((sum, p) => sum + (p.stock_quantity * p.price_retail), 0);
+    const totalInventoryCostValue = productsWithPrice.reduce((sum, p) => sum + (p.stock_quantity * (p.buy_cost ?? 0)), 0);
     const totalInventoryCount = productsWithPrice.reduce((sum, p) => sum + p.stock_quantity, 0);
-    const potentialProfit = totalInventoryValue; // We don't have cost basis, so potential revenue equals inventory value
-    const activeProductCount = productsWithPrice.filter(p => p.is_active).length;
-    const avgPrice = activeProductCount > 0 ? productsWithPrice.filter(p => p.is_active).reduce((sum, p) => sum + p.price_retail, 0) / activeProductCount : 0;
-    const marginEstimate = productsWithPrice.filter(p => p.is_active && p.price_wholesale).length > 0
-      ? (productsWithPrice.filter(p => p.is_active && p.price_wholesale)
-          .reduce((sum, p) => sum + ((p.price_retail - p.price_wholesale!) / p.price_retail * 100), 0) / 
-          productsWithPrice.filter(p => p.is_active && p.price_wholesale).length)
+    const actualPotentialProfit = totalInventoryRetailValue - totalInventoryCostValue;
+    const activeProductsWithCost = productsWithPrice.filter(p => p.is_active && p.buy_cost);
+    const avgPrice = productsWithPrice.filter(p => p.is_active).length > 0 ? productsWithPrice.filter(p => p.is_active).reduce((sum, p) => sum + p.price_retail, 0) / productsWithPrice.filter(p => p.is_active).length : 0;
+    const actualMargin = activeProductsWithCost.length > 0
+      ? (activeProductsWithCost.reduce((sum, p) => sum + ((p.price_retail - (p.buy_cost ?? 0)) / p.price_retail * 100), 0) / activeProductsWithCost.length)
       : 0;
 
     setStats({
@@ -143,10 +142,10 @@ export default function AdminDashboard() {
       pendingAffiliate:  affiliate.filter(a => a.status === "pending").length,
       approvedAffiliate: affiliate.filter(a => a.status === "approved").length,
       // Inventory Analytics
-      totalInventoryValue: totalInventoryValue,
+      totalInventoryValue: totalInventoryRetailValue,
       totalInventoryCount: totalInventoryCount,
-      potentialProfit: potentialProfit,
-      averageMargin: Math.round(marginEstimate * 100) / 100,
+      potentialProfit: actualPotentialProfit,
+      averageMargin: Math.round(actualMargin * 100) / 100,
       averageProductPrice: avgPrice,
     });
     setRecentOrders((recentRes.data ?? []) as RecentOrder[]);
