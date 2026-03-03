@@ -36,6 +36,7 @@ export default function CheckoutPage() {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   // Address form state
   const [address, setAddress] = useState<AddressData>({
@@ -224,7 +225,7 @@ export default function CheckoutPage() {
                 <p className="text-sm text-brand-cream/70 mb-3">
                   All transactions use industry-standard encryption (SSL/TLS). Payment details are processed securely and never stored on public servers.
                 </p>
-                <button className="text-sm text-brand-green hover:text-brand-green-light transition-colors font-medium flex items-center gap-1">
+                <button onClick={() => setShowSecurityModal(true)} className="text-sm text-brand-green hover:text-brand-green-light transition-colors font-medium flex items-center gap-1">
                   Learn about our security
                   <ChevronRight className="h-3 w-3" />
                 </button>
@@ -258,6 +259,12 @@ export default function CheckoutPage() {
           }}
         />
       )}
+
+      {/* Security Modal */}
+      <SecurityModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+      />
     </div>
   );
 }
@@ -443,6 +450,178 @@ function PaymentModal({
               onSuccess={onSuccess}
             />
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+// Security Information Modal Component
+interface SecurityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-b from-brand-dark via-brand-dark to-brand-dark/95 border border-brand-green/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-brand-green/20">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-r from-brand-dark via-brand-dark to-brand-green/10 border-b border-brand-green/30 px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-brand-green/20 flex items-center justify-center">
+              <svg className="h-6 w-6 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414L10 3.586l4.707 4.707a1 1 0 01-1.414 1.414L11 6.414V15a1 1 0 11-2 0V6.414L6.707 9.707a1 1 0 01-1.414 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-brand-cream">Payment Security</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-brand-cream/60 hover:text-brand-cream transition-colors"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-6 space-y-6">
+          {/* Intro */}
+          <div className="bg-brand-green/5 border border-brand-green/20 rounded-lg p-4">
+            <p className="text-brand-cream/90 leading-relaxed">
+              Every transaction at Trippy Hippie is fortified with military-grade encryption and multi-layered security protocols. Your payment information is treated with the utmost care and technical sophistication.
+            </p>
+          </div>
+
+          {/* Security Pillars */}
+          <div className="space-y-4">
+            {/* End-to-End Encryption */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">End-to-End Encryption</h3>
+                  <p className="text-sm text-brand-cream/70">All data transmitted between your device and our servers uses TLS 1.3 encryption—the same standard protecting financial institutions and government communications. Your payment credentials never exist in plaintext on our systems.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tokenization & Isolation */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.5 1.5H5.75A2.75 2.75 0 003 4.25v11.5A2.75 2.75 0 005.75 18.5h8.5A2.75 2.75 0 0017 15.75V8" />
+                    <path d="M17 4v4M17 4l-3-3m3 3l3-3" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">Payment Tokenization</h3>
+                  <p className="text-sm text-brand-cream/70">Your payment method is tokenized—converted into a unique, single-use identifier—so sensitive details are never stored or transmitted unnecessarily. Even if one transaction is compromised, all others remain secure through unique cryptographic tokens.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Fraud Detection */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">Advanced Fraud Detection</h3>
+                  <p className="text-sm text-brand-cream/70">Sophisticated AI-powered systems monitor every transaction for anomalies in real-time. Geolocation verification, device fingerprinting, and behavioral analysis work together to identify suspicious activity before it becomes a problem.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Compliance Standards */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 3.062v6.372a3.066 3.066 0 01-2.812 3.062p-3.976 0A3.066 3.066 0 0110 17.748zm7-1.171a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9 13a1 1 0 11-2 0 1 1 0 012 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">Industry Compliance</h3>
+                  <p className="text-sm text-brand-cream/70">We maintain PCI DSS Level 1 compliance—the highest standard in payment card industry security. Our infrastructure is regularly audited by third-party security firms to ensure we exceed all regulatory requirements and best practices.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Secure API Architecture */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.5 1.5H2.75A1.75 1.75 0 001 3.25v13.5c0 .966.784 1.75 1.75 1.75h14.5A1.75 1.75 0 0019 16.75v-9" />
+                    <path d="M14 11l-4-4-4 4m8 0v4" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">Zero-Knowledge Architecture</h3>
+                  <p className="text-sm text-brand-cream/70">Our payment infrastructure uses zero-knowledge proofs where applicable, ensuring that sensitive transaction details are verified without being exposed or logged unnecessarily. We process only what's essential.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Continuous Monitoring */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">24/7 Security Monitoring</h3>
+                  <p className="text-sm text-brand-cream/70">Our systems are monitored continuously for intrusion attempts, unusual patterns, and security vulnerabilities. Automated alerts and human security experts work around the clock to protect every transaction.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dispute Resolution */}
+            <div className="border border-brand-green/20 rounded-lg p-4 hover:border-brand-green/40 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-brand-green/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zM8 9a1 1 0 100-2 1 1 0 000 2zm1 4a1 1 0 11-2 0 1 1 0 012 0zm5-4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 11-2 0 1 1 0 012 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-cream mb-1">Buyer Protection & Disputes</h3>
+                  <p className="text-sm text-brand-cream/70">If anything goes wrong, our support team works immediately to resolve disputes. We maintain detailed, cryptographically-signed transaction logs and offer rapid refund processing for legitimate concerns.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Statement */}
+          <div className="bg-brand-green/10 border border-brand-green/30 rounded-lg p-4">
+            <p className="text-brand-cream/90 text-sm leading-relaxed">
+              <span className="font-semibold">Your confidence matters.</span> We've invested in the most rigorous security infrastructure available because we respect your trust. Every transaction is treated as if it were our own, with the same technical excellence and protective measures.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-brand-green/30 px-6 py-4 bg-brand-dark/50 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 rounded-lg border border-brand-green/40 text-brand-cream hover:border-brand-green/60 hover:bg-brand-green/5 transition-all font-medium"
+          >
+            Got It
+          </button>
         </div>
       </div>
     </div>
