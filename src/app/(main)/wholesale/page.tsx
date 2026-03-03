@@ -63,6 +63,7 @@ export default function WholesalePage() {
           .from("products")
           .select("*")
           .eq("is_active", true)
+          .eq("is_hidden", false)
           .eq("is_wholesale", true);
 
         // Apply state restrictions if any

@@ -44,6 +44,7 @@ export default async function ProductPage({ params }: Props) {
     .select("*")
     .eq("id", params.id)
     .eq("is_active", true)
+    .eq("is_hidden", false)
     .single();
 
   if (!product) notFound();
@@ -53,6 +54,7 @@ export default async function ProductPage({ params }: Props) {
     .select("*")
     .eq("category", product.category)
     .eq("is_active", true)
+    .eq("is_hidden", false)
     .neq("id", product.id)
     .limit(4);
 

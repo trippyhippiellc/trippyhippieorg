@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("products")
       .select("*")
+      .eq("is_hidden", false)
       .order("name");
 
     if (active) {

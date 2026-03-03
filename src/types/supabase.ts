@@ -110,6 +110,7 @@ export interface Database {
           enable_bulk_pricing: boolean;        // Toggle bulk pricing for this product
           has_variants: boolean;               // Does this product have variants
           variants: Json | null;               // Array of product variants with images and options
+          is_hidden: boolean;                  // Hidden from website completely
           average_rating: number;              // Computed from reviews (0–5)
           review_count: number;
           created_at: string;
@@ -141,6 +142,7 @@ export interface Database {
           enable_bulk_pricing?: boolean;
           has_variants?: boolean;
           variants?: Json | null;
+          is_hidden?: boolean;
           average_rating?: number;
           review_count?: number;
           created_at?: string;

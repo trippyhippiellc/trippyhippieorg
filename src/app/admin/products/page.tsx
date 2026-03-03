@@ -48,6 +48,7 @@ interface ProductForm {
   images:               string[];
   is_active:            boolean;
   is_featured:          boolean;
+  is_hidden:            boolean;              // Hidden from website completely
   enable_bulk_pricing:  boolean;              // New: toggle bulk pricing
   has_variants:         boolean;              // New: toggle variants
   variants:             ProductVariant[];     // New: array of variants
@@ -70,7 +71,7 @@ const EMPTY: ProductForm = {
   price_retail: "", price_wholesale: "", price_compare: "", buy_cost: "",
   stock_quantity: "0", thca_percentage: "", weight_grams: "",
   image_url: "", gallery_input: "", images: [],
-  is_active: true, is_featured: false, enable_bulk_pricing: false, has_variants: false, variants: [],
+  is_active: true, is_featured: false, is_hidden: false, enable_bulk_pricing: false, has_variants: false, variants: [],
   tags: "", state_restrictions: [],
   bulk_tiers: [
     { quantity: 2, discount_percent: 5,  label: "2 for 5% off"  },
@@ -251,6 +252,7 @@ export default function AdminProductsPage() {
       images:               [form.image_url.trim(), ...form.images].filter(Boolean),
       is_active:            form.is_active,
       is_featured:          form.is_featured,
+      is_hidden:            form.is_hidden,
       enable_bulk_pricing:  form.enable_bulk_pricing,
       has_variants:         form.has_variants,
       variants:             form.has_variants && form.variants.length > 0 ? form.variants : null,
@@ -466,6 +468,13 @@ export default function AdminProductsPage() {
                 <input type="checkbox" checked={form.is_featured} onChange={e => setField("is_featured", e.target.checked)} className="accent-brand-green" />
                 <span className="text-sm text-brand-cream-muted">Featured (shown on homepage)</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.is_hidden} onChange={e => setField("is_hidden", e.target.checked)} className="accent-brand-green" />
+                <span className="text-sm text-brand-cream-muted">Hidden (completely hidden from website)</span>
+              </label>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.enable_bulk_pricing} onChange={e => setField("enable_bulk_pricing", e.target.checked)} className="accent-brand-green" />
                 <span className="text-sm text-brand-cream-muted">Enable Bulk Pricing (show tiers)</span>
