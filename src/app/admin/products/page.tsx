@@ -228,6 +228,13 @@ export default function AdminProductsPage() {
     if (isNaN(retailCents) || retailCents <= 0) { toast.error("Retail price must be a positive number."); return; }
     setSaving(true);
     const finalSlug = makeSlug(form.slug);
+    
+    // Calculate stock from variants if they exist
+    let calculatedStock = parseInt(form.stock_quantity) || 0;
+    if (form.has_variants && form.variants.length > 0) {
+      calculatedStock = form.variants.reduce((sum, v) => sum + (parseInt(v.stock_quantity) || 0), 0);
+    }
+    
     const payload = {
       name:                 form.name.trim(),
       slug:                 finalSlug,
@@ -238,7 +245,7 @@ export default function AdminProductsPage() {
       price_wholesale:      form.price_wholesale ? Math.round(parseFloat(form.price_wholesale) * 100) : null,
       price_compare:        form.price_compare   ? Math.round(parseFloat(form.price_compare)   * 100) : null,
       buy_cost:             form.buy_cost ? Math.round(parseFloat(form.buy_cost) * 100) : null,
-      stock_quantity:       parseInt(form.stock_quantity) || 0,
+      stock_quantity:       calculatedStock,
       thca_percentage:      form.thca_percentage ? parseFloat(form.thca_percentage) : null,
       weight_grams:         form.weight_grams    ? parseFloat(form.weight_grams)    : null,
       images:               [form.image_url.trim(), ...form.images].filter(Boolean),

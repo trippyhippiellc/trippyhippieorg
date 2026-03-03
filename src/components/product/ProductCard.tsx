@@ -21,7 +21,27 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const basePrice    = isWholesaleMode && product.price_wholesale
     ? product.price_wholesale
     : product.price_retail;
-  const isOutOfStock = product.stock_quantity <= 0;
+
+  // Parse variants if they exist
+  let variants: any[] = [];
+  if (product.has_variants && product.variants) {
+    if (typeof product.variants === 'string') {
+      try {
+        variants = JSON.parse(product.variants) as any[];
+      } catch {
+        variants = [];
+      }
+    } else if (Array.isArray(product.variants)) {
+      variants = product.variants;
+    }
+  }
+
+  // Calculate total stock from variants if they exist, otherwise use main stock
+  const totalStock = product.has_variants && variants.length > 0
+    ? variants.reduce((sum, v) => sum + (Number(v.stock_quantity) || 0), 0)
+    : product.stock_quantity;
+
+  const isOutOfStock = totalStock <= 0;
   
   // Parse images - handle both array and JSON string
   let images: string[] = [];
