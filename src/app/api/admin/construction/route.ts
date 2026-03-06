@@ -16,16 +16,23 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.replace("Bearer ", "");
+    
+    // Create fresh client for auth check
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await authClient.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await authClient
       .from("profiles")
       .select("is_admin")
       .eq("id", user.id)
@@ -35,8 +42,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch construction settings
-    const { data: settings, error: fetchError } = await supabase
+    // Fetch construction settings with fresh client
+    const freshClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    const { data: settings, error: fetchError } = await freshClient
       .from("site_settings")
       .select("id, is_construction_mode, construction_password, created_at, updated_at")
       .single();
@@ -79,16 +91,23 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = authHeader.replace("Bearer ", "");
+    
+    // Create fresh client for auth check
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await authClient.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await authClient
       .from("profiles")
       .select("is_admin")
       .eq("id", user.id)
@@ -107,8 +126,14 @@ export async function PUT(request: NextRequest) {
       hasPassword: !!constructionPassword,
     });
 
+    // Create fresh client for database operations
+    const dbClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // Fetch current settings to preserve values not being changed
-    const { data: currentSettings, error: fetchError } = await supabase
+    const { data: currentSettings, error: fetchError } = await dbClient
       .from("site_settings")
       .select("is_construction_mode, construction_password")
       .single();
@@ -123,7 +148,7 @@ export async function PUT(request: NextRequest) {
     const finalPassword = constructionPassword !== undefined ? constructionPassword : currentSettings?.construction_password ?? "construction123";
 
     // Use RPC function with explicit parameters
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await dbClient
       .rpc('update_site_settings', {
         p_is_construction_mode: finalMode,
         p_construction_password: finalPassword,
