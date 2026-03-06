@@ -15,7 +15,7 @@ export function useFontLoader() {
         const { data: fontSettings } = await supabase
           .from("font_settings")
           .select("active_font_id")
-          .single();
+          .maybeSingle();
 
         if (!(fontSettings as any)?.active_font_id) {
           // No custom font, use default

@@ -42,10 +42,37 @@ export async function POST(request: NextRequest) {
     }
 
     // Update font settings
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from("font_settings")
       .select("id")
-      .single();
+      .maybeSingle();
+
+    if (settingsError) {
+      console.error("Font settings fetch error:", settingsError);
+      return NextResponse.json(
+        { error: "Failed to fetch font settings" },
+        { status: 500 }
+      );
+    }
+
+    if (!settings) {
+      // Create default font_settings row if none exists
+      const { data: newSettings, error: insertError } = await supabase
+        .from("font_settings")
+        .insert({ active_font_id: fontId })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Font settings creation error:", insertError);
+        return NextResponse.json(
+          { error: "Failed to create font settings" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(newSettings);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.from("font_settings") as any)
