@@ -7,6 +7,7 @@ import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useStateSelector } from "@/features/state-selector/useStateSelector";
 import { statesData } from "@/features/state-selector/stateData";
+import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -93,7 +94,7 @@ export function RegisterForm() {
           id_number: idNumber.trim() || null,
           selected_state: state,
         },
-        emailRedirectTo: `${window.location.origin}/verify`,
+        emailRedirectTo: `${siteConfig.url}/verify`,
       },
     });
 

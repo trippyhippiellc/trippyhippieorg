@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
+import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CheckCircle } from "lucide-react";
@@ -47,7 +48,7 @@ export default function ProfilePage() {
     setPwLoading(true);
     const client = createClient();
     await client.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/account/profile?reset=true`,
+      redirectTo: `${siteConfig.url}/account/profile?reset=true`,
     });
     setPwSent(true);
     setPwLoading(false);

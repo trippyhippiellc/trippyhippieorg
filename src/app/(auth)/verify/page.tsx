@@ -22,7 +22,21 @@ export default function VerifyPage() {
   useEffect(() => {
     const handleVerification = async () => {
       try {
-        // Check if user is already logged in (session exists)
+        // Check if URL contains verification token from email link
+        // Supabase sends: /verify#access_token=xxx&type=email&refresh_token=xxx
+        const hash = window.location.hash;
+        const hasToken = hash.includes("access_token") && hash.includes("type=email");
+        
+        if (!hasToken) {
+          // No valid token in URL - user tried to access page directly
+          setStatus("error");
+          setMessage(
+            "Invalid verification link. Please click the link sent to your email to confirm your account."
+          );
+          return;
+        }
+
+        // Get the session - Supabase automatically processes the token from URL
         const {
           data: { session },
           error: sessionError,
@@ -32,13 +46,12 @@ export default function VerifyPage() {
           throw sessionError;
         }
 
-        if (session) {
-          // User is already verified/logged in
+        if (session && session.user) {
+          // User is verified with valid session tied to their account
           setStatus("success");
-          setMessage("Your email has been verified! Redirecting to account...");
-          setTimeout(() => router.push("/account"), 2000);
+          setMessage("Your email was successfully verified!");
         } else {
-          // No active session - link may be expired
+          // Token was present but didn't create a valid session
           setStatus("error");
           setMessage(
             "Verification link has expired or is invalid. Please try signing up again."
@@ -107,9 +120,23 @@ export default function VerifyPage() {
               <h2 className="text-xl font-display font-bold text-green-400 text-center mb-2">
                 Email Verified!
               </h2>
-              <p className="text-brand-cream-muted text-center text-sm">
+              <p className="text-brand-cream-muted text-center text-sm mb-6">
                 {message}
               </p>
+              <div className="space-y-3">
+                <Link
+                  href="/login"
+                  className="block w-full text-center px-4 py-3 bg-brand-green text-brand-dark font-semibold rounded-lg hover:bg-brand-green-light transition-colors"
+                >
+                  Sign In to Your Account
+                </Link>
+                <Link
+                  href="/"
+                  className="block w-full text-center px-4 py-3 border border-brand-green text-brand-green font-semibold rounded-lg hover:bg-brand-green/10 transition-colors"
+                >
+                  Return Home
+                </Link>
+              </div>
             </>
           )}
 

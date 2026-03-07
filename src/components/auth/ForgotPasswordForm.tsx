@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -25,7 +26,7 @@ export function ForgotPasswordForm() {
 
     const { error: authError } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
-      { redirectTo: `${window.location.origin}/account/profile?reset=true` }
+      { redirectTo: `${siteConfig.url}/account/profile?reset=true` }
     );
 
     if (authError) {
