@@ -10,18 +10,34 @@ import { useToast } from "@/hooks/useToast";
 
 /* src/app/(main)/coa/page.tsx */
 
+interface ProductVariant {
+  id: string;
+  name: string;
+  image: string;
+  price_retail: string;
+  price_wholesale: string;
+  stock_quantity: string;
+}
+
 interface Product {
   id: string;
   name: string;
   category: string;
   thca_percentage: number | null;
+  has_variants: boolean;
+  variants: ProductVariant[] | null;
+}
+
+interface SelectedProduct {
+  productId: string;
+  variantId?: string;
 }
 
 export default function COAPage() {
   const { user } = useAuth();
   const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -74,9 +90,19 @@ export default function COAPage() {
 
   function toggleProduct(productId: string) {
     setSelectedProducts(prev =>
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+      prev.some(p => p.productId === productId)
+        ? prev.filter(p => p.productId !== productId)
+        : [...prev, { productId }]
+    );
+  }
+
+  function setVariantForProduct(productId: string, variantId: string) {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.productId === productId
+          ? { productId, variantId }
+          : p
+      )
     );
   }
 
@@ -85,6 +111,17 @@ export default function COAPage() {
 
     if (selectedProducts.length === 0) {
       toast.error("Please select at least one product");
+      return;
+    }
+
+    // Check that products with variants have a variant selected
+    const missingVariants = selectedProducts.some(p => {
+      const product = products.find(pr => pr.id === p.productId);
+      return product?.has_variants && !p.variantId;
+    });
+
+    if (missingVariants) {
+      toast.error("Please select a variant for each product");
       return;
     }
 
@@ -102,7 +139,7 @@ export default function COAPage() {
           name,
           email,
           phone,
-          requestedProductIds: selectedProducts,
+          requestedProducts: selectedProducts,
         }),
       });
 
@@ -217,34 +254,62 @@ export default function COAPage() {
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="max-h-96 overflow-y-auto space-y-2">
-                {filteredProducts.map(product => (
-                  <div key={product.id} className="flex items-center gap-4 p-3 rounded-brand bg-[#162816] border border-white/5">
-                    <button
-                      onClick={() => toggleProduct(product.id)}
-                      className={`flex-shrink-0 w-5 h-5 rounded border-2 transition-colors ${
-                        selectedProducts.includes(product.id)
-                          ? "bg-brand-green border-brand-green"
-                          : "border-white/30 hover:border-brand-green"
-                      }`}
-                    >
-                      {selectedProducts.includes(product.id) && (
-                        <Check className="h-3 w-3 text-black mx-auto" />
+                {filteredProducts.map(product => {
+                  const isSelected = selectedProducts.some(p => p.productId === product.id);
+                  const selectedVariant = selectedProducts.find(p => p.productId === product.id)?.variantId;
+
+                  return (
+                    <div key={product.id}>
+                      <div className="flex items-center gap-4 p-3 rounded-brand bg-[#162816] border border-white/5">
+                        <button
+                          onClick={() => toggleProduct(product.id)}
+                          className={`flex-shrink-0 w-5 h-5 rounded border-2 transition-colors ${
+                            isSelected
+                              ? "bg-brand-green border-brand-green"
+                              : "border-white/30 hover:border-brand-green"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Check className="h-3 w-3 text-black mx-auto" />
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-brand-cream truncate">{product.name}</p>
+                          <p className="text-xs text-brand-cream-dark capitalize flex items-center gap-2">
+                            {product.category}
+                            {product.thca_percentage && (
+                              <>
+                                <span>•</span>
+                                <span className="text-brand-green">THCa {product.thca_percentage}%</span>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Variant Selector */}
+                      {isSelected && product.has_variants && product.variants && product.variants.length > 0 && (
+                        <div className="ml-9 mt-2 p-3 rounded-brand bg-[#1a321a] border border-brand-green/30">
+                          <label className="text-xs font-semibold text-brand-green uppercase tracking-wider mb-2 block">
+                            Select Variant
+                          </label>
+                          <select
+                            value={selectedVariant || ""}
+                            onChange={(e) => setVariantForProduct(product.id, e.target.value)}
+                            className="w-full px-2 py-2 rounded text-sm bg-[#162816] border border-white/10 text-brand-cream placeholder-brand-cream-muted focus:border-brand-green focus:outline-none"
+                          >
+                            <option value="">-- Choose a variant --</option>
+                            {product.variants.map(variant => (
+                              <option key={variant.id} value={variant.id}>
+                                {variant.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       )}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-brand-cream truncate">{product.name}</p>
-                      <p className="text-xs text-brand-cream-dark capitalize flex items-center gap-2">
-                        {product.category}
-                        {product.thca_percentage && (
-                          <>
-                            <span>•</span>
-                            <span className="text-brand-green">THCa {product.thca_percentage}%</span>
-                          </>
-                        )}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8">
