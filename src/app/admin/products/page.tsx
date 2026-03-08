@@ -292,6 +292,12 @@ export default function AdminProductsPage() {
     if (error) toast.error(error.message);
     else { toast.success(!current ? "Featured." : "Unfeatured."); setProducts(prev => prev.map(p => p.id === id ? { ...p, is_featured: !current } : p)); }
   }
+  async function toggleHidden(id: string, current: boolean) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("products").update({ is_hidden: !current }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success(!current ? "Hidden from website." : "Visible on website."); setProducts(prev => prev.map(p => p.id === id ? { ...p, is_hidden: !current } : p)); }
+  }
 
   function toggleSort(field: SortField) {
     if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -328,24 +334,24 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-display font-bold text-brand-cream">Products</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-brand-cream">Products</h1>
           <p className="text-xs text-brand-cream-dark mt-0.5">
             {products.length} total · {products.filter(p => p.is_active).length} active · {products.filter(p => p.stock_quantity <= 0).length} out of stock
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" leftIcon={<RefreshCw className="h-3.5 w-3.5" />} onClick={fetchProducts} disabled={loading}>Refresh</Button>
-          <Button variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setForm(EMPTY); setEditingId(null); setSlugLocked(false); setShowForm(true); window.scrollTo({top:0,behavior:"smooth"}); }}>Add Product</Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="ghost" size="sm" leftIcon={<RefreshCw className="h-3.5 w-3.5" />} onClick={fetchProducts} disabled={loading} className="flex-1 sm:flex-none">Refresh</Button>
+          <Button variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setForm(EMPTY); setEditingId(null); setSlugLocked(false); setShowForm(true); window.scrollTo({top:0,behavior:"smooth"}); }} className="flex-1 sm:flex-none">Add Product</Button>
         </div>
       </div>
 
       {showForm && (
-        <div className="glass-card border border-brand-green/20 p-6 rounded-card space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-brand-cream">{editingId ? "Edit Product" : "New Product"}</h2>
-            <button onClick={cancelForm} className="text-brand-cream-dark hover:text-brand-cream transition-colors"><X className="h-5 w-5" /></button>
+        <div className="glass-card border border-brand-green/20 p-4 sm:p-6 rounded-card space-y-5 overflow-x-hidden">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <h2 className="font-semibold text-brand-cream text-lg sm:text-xl">{editingId ? "Edit Product" : "New Product"}</h2>
+            <button onClick={cancelForm} className="text-brand-cream-dark hover:text-brand-cream transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
           </div>
           <form onSubmit={saveProduct} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -372,9 +378,9 @@ export default function AdminProductsPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-brand-cream-muted">State Restrictions (optional)</label>
               <p className="text-xs text-brand-cream-dark mb-2">Select states where this product is NOT available. Leave empty to allow sales in all states.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 p-3 rounded-brand bg-white/3 border border-white/5 max-h-48 overflow-y-auto">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 p-3 rounded-brand bg-white/3 border border-white/5 max-h-48 overflow-y-auto">
                 {["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"].map(state => (
-                  <label key={state} className="flex items-center gap-2 cursor-pointer">
+                  <label key={state} className="flex items-center gap-1 sm:gap-2 cursor-pointer text-xs sm:text-sm">
                     <input
                       type="checkbox"
                       checked={form.state_restrictions.includes(state)}
@@ -385,7 +391,7 @@ export default function AdminProductsPage() {
                           setField("state_restrictions", form.state_restrictions.filter(s => s !== state));
                         }
                       }}
-                      className="w-4 h-4 rounded bg-white/10 border border-white/20 text-brand-green focus:ring-2 focus:ring-brand-green/40 cursor-pointer"
+                      className="w-4 h-4 rounded bg-white/10 border border-white/20 text-brand-green focus:ring-2 focus:ring-brand-green/40 cursor-pointer flex-shrink-0"
                     />
                     <span className="text-xs text-brand-cream">{state}</span>
                   </label>
@@ -444,7 +450,7 @@ export default function AdminProductsPage() {
 
             <div>
               <p className="text-sm font-medium text-brand-cream-muted mb-3">Pricing (enter in dollars, e.g. 25.00)</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Input label="Buy Cost ($)"         type="number" step="0.01" min="0" value={form.buy_cost}        onChange={e => setField("buy_cost",        e.target.value)} placeholder="12.00" />
                 <Input label="Retail Price ($) *"   type="number" step="0.01" min="0" value={form.price_retail}    onChange={e => setField("price_retail",    e.target.value)} placeholder="25.00" required />
                 <Input label="Wholesale Price ($)"  type="number" step="0.01" min="0" value={form.price_wholesale} onChange={e => setField("price_wholesale", e.target.value)} placeholder="18.00" />
@@ -452,35 +458,35 @@ export default function AdminProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input label="Stock Qty"    type="number" min="0"                       value={form.stock_quantity}  onChange={e => setField("stock_quantity",  e.target.value)} />
               <Input label="THCa %"       type="number" step="0.01" min="0" max="100" value={form.thca_percentage} onChange={e => setField("thca_percentage", e.target.value)} placeholder="24.5" />
               <Input label="Weight (g)"   type="number" step="0.1"  min="0"           value={form.weight_grams}    onChange={e => setField("weight_grams",    e.target.value)} placeholder="3.5" />
               <Input label="Tags (comma)" value={form.tags} onChange={e => setField("tags", e.target.value)} placeholder="premium, indoor" />
             </div>
 
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-4 sm:gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_active}   onChange={e => setField("is_active",   e.target.checked)} className="accent-brand-green" />
+                <input type="checkbox" checked={form.is_active}   onChange={e => setField("is_active",   e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Active (visible to shoppers)</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_featured} onChange={e => setField("is_featured", e.target.checked)} className="accent-brand-green" />
+                <input type="checkbox" checked={form.is_featured} onChange={e => setField("is_featured", e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Featured (shown on homepage)</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_hidden} onChange={e => setField("is_hidden", e.target.checked)} className="accent-brand-green" />
+                <input type="checkbox" checked={form.is_hidden} onChange={e => setField("is_hidden", e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Hidden (completely hidden from website)</span>
               </label>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-4 sm:gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.enable_bulk_pricing} onChange={e => setField("enable_bulk_pricing", e.target.checked)} className="accent-brand-green" />
+                <input type="checkbox" checked={form.enable_bulk_pricing} onChange={e => setField("enable_bulk_pricing", e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Enable Bulk Pricing (show tiers)</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.has_variants} onChange={e => setField("has_variants", e.target.checked)} className="accent-brand-green" />
+                <input type="checkbox" checked={form.has_variants} onChange={e => setField("has_variants", e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Has Variants (strains, options)</span>
               </label>
             </div>
@@ -504,7 +510,7 @@ export default function AdminProductsPage() {
                         setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, image: e.target.value } : v) }));
                       }} placeholder="https://..." />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <Input label="Price Retail ($)" type="number" step="0.01" value={variant.price_retail} onChange={e => {
                         setForm(prev => ({ ...prev, variants: prev.variants.map((v, idx) => idx === i ? { ...v, price_retail: e.target.value } : v) }));
                       }} placeholder={form.price_retail || "0.00"} />
@@ -526,50 +532,54 @@ export default function AdminProductsPage() {
 
             {form.enable_bulk_pricing && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <label className="text-sm font-medium text-brand-cream-muted">Bulk Discount Tiers</label>
                   <button type="button" onClick={addTier} className="text-xs text-brand-green hover:underline flex items-center gap-1"><Plus className="h-3 w-3" /> Add Tier</button>
                 </div>
                 {form.bulk_tiers.map((tier, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_1fr_2fr_auto] gap-2 items-end">
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr_auto] gap-2 items-end">
                     <Input label={i===0 ? "Min Qty" : undefined}               type="number" min="1"            value={tier.quantity.toString()}         onChange={e => updateTier(i,"quantity",        e.target.value)} />
                     <Input label={i===0 ? "Discount %" : undefined}            type="number" min="0" max="100"  value={tier.discount_percent.toString()} onChange={e => updateTier(i,"discount_percent",e.target.value)} />
                     <Input label={i===0 ? "Label (shown to customer)" : undefined}                               value={tier.label}                       onChange={e => updateTier(i,"label",e.target.value)} />
-                    <button type="button" onClick={() => removeTier(i)} className="mb-0.5 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-brand transition-colors"><X className="h-3.5 w-3.5" /></button>
+                    <div className="flex items-end h-full mb-0.5 sm:mb-0">
+                      <button type="button" onClick={() => removeTier(i)} className="w-full sm:w-auto p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-brand transition-colors flex items-center justify-center"><X className="h-3.5 w-3.5" /></button>
+                    </div>
                   </div>
                 ))}
                 {form.bulk_tiers.length === 0 && <p className="text-xs text-brand-cream-dark">No tiers configured.</p>}
               </div>
             )}
 
-            <div className="flex gap-3 pt-1">
-              <Button type="submit" variant="primary" isLoading={saving} leftIcon={<CheckCircle className="h-4 w-4" />}>{editingId ? "Save Changes" : "Create Product"}</Button>
-              <Button type="button" variant="ghost" onClick={cancelForm}>Cancel</Button>
+            <div className="flex flex-col sm:flex-row gap-3 pt-1">
+              <Button type="submit" variant="primary" isLoading={saving} leftIcon={<CheckCircle className="h-4 w-4" />} className="flex-1 sm:flex-none">{editingId ? "Save Changes" : "Create Product"}</Button>
+              <Button type="button" variant="ghost" onClick={cancelForm} className="flex-1 sm:flex-none">Cancel</Button>
             </div>
           </form>
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+        <div className="relative flex-1 w-full sm:min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-brand-cream-dark pointer-events-none" />
           <input type="text" placeholder="Search products or slug…" value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream placeholder:text-brand-cream-dark focus:outline-none focus:border-brand-green" />
         </div>
-        <select value={filterCat}    onChange={e => setFilterCat(e.target.value)}                                           className="px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
-          <option value="">All Categories</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-        </select>
-        <select value={filterStock}  onChange={e => setFilterStock(e.target.value as "" | "in" | "out")}                   className="px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
-          <option value="">All Stock</option><option value="in">In Stock</option><option value="out">Out of Stock</option>
-        </select>
-        <select value={filterActive} onChange={e => setFilterActive(e.target.value as "" | "active" | "inactive")}         className="px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
-          <option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option>
-        </select>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <select value={filterCat}    onChange={e => setFilterCat(e.target.value)}                                           className="flex-1 sm:flex-none px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
+            <option value="">All Categories</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+          </select>
+          <select value={filterStock}  onChange={e => setFilterStock(e.target.value as "" | "in" | "out")}                   className="flex-1 sm:flex-none px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
+            <option value="">All Stock</option><option value="in">In Stock</option><option value="out">Out of Stock</option>
+          </select>
+          <select value={filterActive} onChange={e => setFilterActive(e.target.value as "" | "active" | "inactive")}         className="flex-1 sm:flex-none px-3 py-2 text-sm bg-[#162816] border border-white/10 rounded-brand text-brand-cream focus:outline-none focus:border-brand-green">
+            <option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option>
+          </select>
+        </div>
         {(search || filterCat || filterStock || filterActive) && (
-          <button onClick={() => { setSearch(""); setFilterCat(""); setFilterStock(""); setFilterActive(""); }} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"><X className="h-3 w-3" /> Clear</button>
+          <button onClick={() => { setSearch(""); setFilterCat(""); setFilterStock(""); setFilterActive(""); }} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 w-full sm:w-auto justify-center"><X className="h-3 w-3" /> Clear</button>
         )}
-        <span className="text-xs text-brand-cream-dark ml-auto">{visible.length} result{visible.length !== 1 ? "s" : ""}</span>
+        <span className="text-xs text-brand-cream-dark w-full sm:w-auto text-center sm:text-right sm:ml-auto">{visible.length} result{visible.length !== 1 ? "s" : ""}</span>
       </div>
 
       {loading ? (
@@ -582,7 +592,9 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="glass-card border border-white/5 rounded-card overflow-hidden">
-          <div className="grid grid-cols-[40px_1fr_90px_60px_100px_130px] gap-3 items-center px-4 py-2.5 border-b border-white/5 text-xs">
+          {/* Desktop Header */}
+          <div className="hidden sm:grid gap-3 items-center px-4 py-2.5 border-b border-white/5 text-xs bg-black/20"
+               style={{ gridTemplateColumns: "40px 1fr 90px 60px 100px auto" }}>
             <div />
             <SortBtn field="name"           label="Product"  />
             <SortBtn field="price_retail"   label="Price"    />
@@ -591,17 +603,22 @@ export default function AdminProductsPage() {
             <span className="text-brand-cream-dark">Actions</span>
           </div>
           {visible.map(p => (
-            <div key={p.id} className="grid grid-cols-[40px_1fr_90px_60px_100px_130px] gap-3 items-center px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
+            <div key={p.id} className="space-y-3 sm:space-y-0 p-4 sm:p-0 sm:border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors sm:grid gap-3 items-center sm:px-4 sm:py-3"
+                 style={{ gridTemplateColumns: "40px 1fr 90px 60px 100px auto" }}>
+              {/* Image - visible on both mobile and desktop */}
               <div className="w-10 h-10 rounded-brand bg-white/5 overflow-hidden flex-shrink-0">
                 {p.images?.[0]
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display="none"; }} />
                   : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="h-4 w-4 text-brand-cream-dark" /></div>}
               </div>
+              
+              {/* Product Info */}
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-0.5">
                   <span className="font-medium text-brand-cream text-sm truncate">{p.name}</span>
                   {p.is_featured         && <Badge variant="featured"  className="text-xs">Featured</Badge>}
+                  {p.is_hidden           && <Badge variant="cancelled" className="text-xs">Hidden</Badge>}
                   {!p.is_active          && <Badge variant="cancelled" className="text-xs">Inactive</Badge>}
                   {p.stock_quantity <= 0 && <Badge variant="pending"   className="text-xs">Out of Stock</Badge>}
                 </div>
@@ -611,21 +628,30 @@ export default function AdminProductsPage() {
                   {p.review_count > 0      && <span className="ml-2 text-brand-green/70">★ {p.average_rating?.toFixed(1)} ({p.review_count})</span>}
                 </p>
               </div>
-              <div className="text-right">
+              
+              {/* Price - hide on mobile, show on desktop */}
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-semibold text-brand-cream">{fmt(p.price_retail)}</p>
                 {p.price_wholesale != null && <p className="text-xs text-brand-cream-dark">{fmt(p.price_wholesale)} ws</p>}
               </div>
-              <div className="text-right">
+              
+              {/* Stock - hide on mobile, show on desktop */}
+              <div className="hidden sm:block text-right">
                 <p className={`text-sm font-medium ${p.stock_quantity > 0 ? "text-brand-cream" : "text-red-400"}`}>{p.stock_quantity}</p>
                 <p className="text-xs text-brand-cream-dark">units</p>
               </div>
-              <span className="text-xs text-brand-cream-muted capitalize">{p.category}</span>
-              <div className="flex items-center gap-1">
-                <a href={`/product/${p.slug}`} target="_blank" rel="noopener noreferrer" title="View" className="w-7 h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-cream transition-colors"><ExternalLink className="h-3.5 w-3.5" /></a>
-                <button onClick={() => toggleFeatured(p.id, p.is_featured)} title={p.is_featured ? "Unfeature" : "Feature"} className={`w-7 h-7 flex items-center justify-center rounded-brand hover:bg-white/5 transition-colors ${p.is_featured ? "text-brand-green" : "text-brand-cream-dark hover:text-brand-cream"}`}><span className="text-xs font-bold">★</span></button>
-                <button onClick={() => toggleActive(p.id, p.is_active)} title={p.is_active ? "Deactivate" : "Activate"} className="w-7 h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-cream transition-colors">{p.is_active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
-                <button onClick={() => startEdit(p)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-cream transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
-                <button onClick={() => deleteProduct(p.id, p.name)} title="Delete" className="w-7 h-7 flex items-center justify-center rounded-brand hover:bg-red-500/10 text-brand-cream-dark hover:text-red-400 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+              
+              {/* Category - hide on mobile, show on desktop */}
+              <span className="hidden sm:block text-xs text-brand-cream-muted capitalize">{p.category}</span>
+              
+              {/* Actions - mobile and desktop */}
+              <div className="flex items-center gap-1 flex-wrap">
+                <a href={`/product/${p.slug}`} target="_blank" rel="noopener noreferrer" title="View" className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-green transition-colors" aria-label="View product"><ExternalLink className="h-4 sm:h-3.5 w-4 sm:w-3.5" /></a>
+                <button onClick={() => toggleFeatured(p.id, p.is_featured)} title={p.is_featured ? "Unfeature" : "Feature"} className={`w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-white/5 transition-colors ${p.is_featured ? "text-brand-green" : "text-brand-cream-dark hover:text-brand-cream"}`}><span className="text-sm sm:text-xs font-bold">★</span></button>
+                <button onClick={() => toggleHidden(p.id, p.is_hidden)} title={p.is_hidden ? "Unhide" : "Hide"} className={`w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-white/5 transition-colors ${p.is_hidden ? "text-red-400" : "text-brand-cream-dark hover:text-brand-cream"}`}>{p.is_hidden ? <EyeOff className="h-4 sm:h-3.5 w-4 sm:w-3.5" /> : <Eye className="h-4 sm:h-3.5 w-4 sm:w-3.5" />}</button>
+                <button onClick={() => toggleActive(p.id, p.is_active)} title={p.is_active ? "Deactivate" : "Activate"} className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-cream transition-colors">{p.is_active ? <Eye className="h-4 sm:h-3.5 w-4 sm:w-3.5" /> : <EyeOff className="h-4 sm:h-3.5 w-4 sm:w-3.5" />}</button>
+                <button onClick={() => startEdit(p)} title="Edit" className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-white/5 text-brand-cream-dark hover:text-brand-green transition-colors"><Pencil className="h-4 sm:h-3.5 w-4 sm:w-3.5" /></button>
+                <button onClick={() => deleteProduct(p.id, p.name)} title="Delete" className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-brand hover:bg-red-500/10 text-brand-cream-dark hover:text-red-400 transition-colors"><Trash2 className="h-4 sm:h-3.5 w-4 sm:w-3.5" /></button>
               </div>
             </div>
           ))}
