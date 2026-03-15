@@ -18,9 +18,18 @@ interface ProductCardProps {
 export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem, isWholesaleMode } = useCart();
 
-  const basePrice    = isWholesaleMode && product.price_wholesale
-    ? product.price_wholesale
-    : product.price_retail;
+  // Determine which price to use
+  // Priority: smoke shop wholesale > regular wholesale > retail
+  let basePrice = product.price_retail;
+  let priceLabel = "";
+  
+  if (product.is_smokeshop_wholesale && product.price_smokeshop_wholesale) {
+    basePrice = product.price_smokeshop_wholesale;
+    priceLabel = "Smoke Shop Wholesale";
+  } else if (isWholesaleMode && product.price_wholesale) {
+    basePrice = product.price_wholesale;
+    priceLabel = "Wholesale Price";
+  }
 
   // Parse variants if they exist
   let variants: any[] = [];
@@ -138,9 +147,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
         />
 
         <div className="flex flex-col gap-1 pt-1">
-          {isWholesaleMode && product.price_wholesale ? (
+          {priceLabel ? (
             <>
-              <span className="text-xs text-brand-cream-dark">Wholesale Price</span>
+              <span className="text-xs text-brand-cream-dark">{priceLabel}</span>
               <span className="font-bold text-base text-brand-green">
                 {formatCurrency(basePrice)}
               </span>
@@ -150,7 +159,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               {formatCurrency(basePrice)}
             </span>
           )}
-          {isOnSale && product.price_compare && (
+          {product.price_compare && product.price_compare > product.price_retail && (
             <span className="text-xs text-brand-cream-dark line-through">
               {formatCurrency(product.price_compare)}
             </span>

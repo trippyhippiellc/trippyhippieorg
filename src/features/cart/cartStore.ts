@@ -34,6 +34,7 @@ export interface CartItem {
   category: string;
   priceRetail: number;         // Cents — always stored
   priceWholesale: number;      // Cents — always stored
+  priceSmokeShopWholesale: number | null;  // Smoke shop wholesale price (cents)
   quantity: number;
   bulkTiers: BulkTier[] | null;
   // Applied bulk discount for current quantity (cents off per unit)
@@ -50,6 +51,7 @@ interface CartStore {
   couponDiscount: number;         // Flat discount in cents from coupon
   isOpen: boolean;                // Cart widget open/closed
   isWholesaleMode: boolean;       // Use wholesale prices?
+  isSmokeShopWholesaleMode: boolean;  // Use smoke shop wholesale prices?
 
   // ---- Cart Actions ----
   addItem: (product: Product, quantity?: number) => void;
@@ -68,6 +70,7 @@ interface CartStore {
 
   // ---- Wholesale Mode ----
   setWholesaleMode: (enabled: boolean) => void;
+  setSmokeShopWholesaleMode: (enabled: boolean) => void;
 
   // ---- Computed Getters ----
   getItemCount: () => number;
@@ -110,6 +113,7 @@ export const useCartStore = create<CartStore>()(
       couponDiscount: 0,
       isOpen: false,
       isWholesaleMode: false,
+      isSmokeShopWholesaleMode: false,
 
 
       ////////////////////////////////////////////////////////////////////
@@ -149,6 +153,7 @@ export const useCartStore = create<CartStore>()(
               category: product.category,
               priceRetail: product.price_retail,
               priceWholesale: product.price_wholesale,
+              priceSmokeShopWholesale: product.price_smokeshop_wholesale ?? null,
               quantity,
               bulkTiers: (product.bulk_tiers as BulkTier[]) ?? null,
               appliedDiscountPercent: getApplicableBulkDiscount(
@@ -242,17 +247,25 @@ export const useCartStore = create<CartStore>()(
         set({ isWholesaleMode: enabled });
       },
 
+      setSmokeShopWholesaleMode: (enabled: boolean) => {
+        set({ isSmokeShopWholesaleMode: enabled });
+      },
+
 
       ////////////////////////////////////////////////////////////////////
       // COMPUTED: GET ITEM PRICE
       // Returns per-unit price for a cart item, accounting for:
-      //   1. Wholesale vs retail price
+      //   1. Smoke shop wholesale vs wholesale vs retail price
       //   2. Bulk tier discount percentage
       ////////////////////////////////////////////////////////////////////
       getItemPrice: (item: CartItem): number => {
-        const basePrice = get().isWholesaleMode
-          ? item.priceWholesale
-          : item.priceRetail;
+        let basePrice = item.priceRetail;
+        
+        if (get().isSmokeShopWholesaleMode && item.priceSmokeShopWholesale) {
+          basePrice = item.priceSmokeShopWholesale;
+        } else if (get().isWholesaleMode && item.priceWholesale) {
+          basePrice = item.priceWholesale;
+        }
 
         if (item.appliedDiscountPercent > 0) {
           const discount = Math.floor(

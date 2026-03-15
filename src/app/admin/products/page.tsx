@@ -49,6 +49,8 @@ interface ProductForm {
   is_active:            boolean;
   is_featured:          boolean;
   is_hidden:            boolean;              // Hidden from website completely
+  is_smokeshop_wholesale: boolean;            // Smoke shop wholesale exclusive product
+  price_smokeshop_wholesale: string;          // Special pricing for smoke shop wholesale
   enable_bulk_pricing:  boolean;              // New: toggle bulk pricing
   has_variants:         boolean;              // New: toggle variants
   variants:             ProductVariant[];     // New: array of variants
@@ -71,7 +73,7 @@ const EMPTY: ProductForm = {
   price_retail: "", price_wholesale: "", price_compare: "", buy_cost: "",
   stock_quantity: "0", thca_percentage: "", weight_grams: "",
   image_url: "", gallery_input: "", images: [],
-  is_active: true, is_featured: false, is_hidden: false, enable_bulk_pricing: false, has_variants: false, variants: [],
+  is_active: true, is_featured: false, is_hidden: false, is_smokeshop_wholesale: false, price_smokeshop_wholesale: "", enable_bulk_pricing: false, has_variants: false, variants: [],
   tags: "", state_restrictions: [],
   bulk_tiers: [
     { quantity: 2, discount_percent: 5,  label: "2 for 5% off"  },
@@ -180,6 +182,8 @@ export default function AdminProductsPage() {
       variants:             Array.isArray(p.variants) ? p.variants : [],
       tags:                 (p.tags ?? []).join(", "),
       state_restrictions:   p.state_restrictions ?? [],
+      is_smokeshop_wholesale: p.is_smokeshop_wholesale ?? false,
+      price_smokeshop_wholesale: p.price_smokeshop_wholesale != null ? String(p.price_smokeshop_wholesale / 100) : "",
       bulk_tiers:           Array.isArray(p.bulk_tiers) && p.bulk_tiers.length > 0 ? p.bulk_tiers : EMPTY.bulk_tiers,
     });
     setEditingId(p.id);
@@ -253,6 +257,8 @@ export default function AdminProductsPage() {
       is_active:            form.is_active,
       is_featured:          form.is_featured,
       is_hidden:            form.is_hidden,
+      is_smokeshop_wholesale: form.is_smokeshop_wholesale,
+      price_smokeshop_wholesale: form.is_smokeshop_wholesale && form.price_smokeshop_wholesale ? Math.round(parseFloat(form.price_smokeshop_wholesale) * 100) : null,
       enable_bulk_pricing:  form.enable_bulk_pricing,
       has_variants:         form.has_variants,
       variants:             form.has_variants && form.variants.length > 0 ? form.variants : null,
@@ -455,6 +461,7 @@ export default function AdminProductsPage() {
                 <Input label="Retail Price ($) *"   type="number" step="0.01" min="0" value={form.price_retail}    onChange={e => setField("price_retail",    e.target.value)} placeholder="25.00" required />
                 <Input label="Wholesale Price ($)"  type="number" step="0.01" min="0" value={form.price_wholesale} onChange={e => setField("price_wholesale", e.target.value)} placeholder="18.00" />
                 <Input label="Compare-At Price ($)" type="number" step="0.01" min="0" value={form.price_compare}   onChange={e => setField("price_compare",   e.target.value)} placeholder="32.00" />
+                {form.is_smokeshop_wholesale && (<Input label="Smokeshop Wholesale Price ($)" type="number" step="0.01" min="0" value={form.price_smokeshop_wholesale} onChange={e => setField("price_smokeshop_wholesale", e.target.value)} placeholder="15.00" required={form.is_smokeshop_wholesale} />)}
               </div>
             </div>
 
@@ -484,6 +491,10 @@ export default function AdminProductsPage() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.enable_bulk_pricing} onChange={e => setField("enable_bulk_pricing", e.target.checked)} className="accent-brand-green w-4 h-4" />
                 <span className="text-sm text-brand-cream-muted">Enable Bulk Pricing (show tiers)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.is_smokeshop_wholesale} onChange={e => setField("is_smokeshop_wholesale", e.target.checked)} className="accent-brand-green w-4 h-4" />
+                <span className="text-sm text-brand-cream-muted">Smoke Shop Wholesale?</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.has_variants} onChange={e => setField("has_variants", e.target.checked)} className="accent-brand-green w-4 h-4" />

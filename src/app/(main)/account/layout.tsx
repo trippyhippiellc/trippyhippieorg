@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { User, ShoppingBag, Shield, Star, Settings, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, ShoppingBag, Shield, Star, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils/cn";
   src/app/(main)/account/layout.tsx
 */
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/account",           label: "Dashboard",  icon: User },
   { href: "/account/orders",    label: "My Orders",  icon: ShoppingBag },
   { href: "/account/profile",   label: "Profile",    icon: Settings },
@@ -25,12 +25,42 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router   = useRouter();
   const supabase = createClient();
+  const [isSmokeShopWholesale, setIsSmokeShopWholesale] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) router.push("/login");
   }, [user, isLoading, router]);
 
+  // Check if user has smoke shop wholesale access
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSmokeShopWholesale = async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("is_smokeshop_wholesale")
+          .eq("id", user.id)
+          .single();
+
+        setIsSmokeShopWholesale(data?.is_smokeshop_wholesale === true);
+      } catch (err) {
+        console.error("Error checking smoke shop wholesale status:", err);
+      }
+    };
+
+    checkSmokeShopWholesale();
+  }, [user, supabase]);
+
   if (isLoading || !user) return null;
+
+  // Build nav links with conditional smoke shop wholesale link
+  const navLinks = [
+    ...baseNavLinks,
+    ...(isSmokeShopWholesale ? [
+      { href: "/smoke-shop-wholesale", label: "Smoke Shop Wholesale", icon: Wallet }
+    ] : [])
+  ];
 
   async function signOut() {
     await supabase.auth.signOut();

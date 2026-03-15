@@ -51,6 +51,7 @@ export function useCart() {
     couponDiscount:  store.couponDiscount,
     isOpen:          store.isOpen,
     isWholesaleMode: store.isWholesaleMode,
+    isSmokeShopWholesaleMode: store.isSmokeShopWholesaleMode,
 
     itemCount:    rawCount,
     displayCount,
@@ -70,6 +71,7 @@ export function useCart() {
     closeCart:        store.closeCart,
     toggleCart:       store.toggleCart,
     setWholesaleMode: store.setWholesaleMode,
+    setSmokeShopWholesaleMode: store.setSmokeShopWholesaleMode,
   };
 }
 
