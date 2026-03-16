@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       .from("products")
       .select("*")
       .eq("is_hidden", false)
+      .eq("is_smokeshop_wholesale", false)
       .order("name");
 
     if (active) {

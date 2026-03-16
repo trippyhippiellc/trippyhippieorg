@@ -21,7 +21,7 @@ const baseNavLinks = [
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();   // ← isLoading (not loading)
+  const { user, isLoading, isAdmin } = useAuth();   // ← isLoading (not loading)
   const pathname = usePathname();
   const router   = useRouter();
   const supabase = createClient();
@@ -57,7 +57,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   // Build nav links with conditional smoke shop wholesale link
   const navLinks = [
     ...baseNavLinks,
-    ...(isSmokeShopWholesale ? [
+    ...(isSmokeShopWholesale || isAdmin ? [
       { href: "/smoke-shop-wholesale", label: "Smoke Shop Wholesale", icon: Wallet }
     ] : [])
   ];
