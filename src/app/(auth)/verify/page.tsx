@@ -22,21 +22,8 @@ export default function VerifyPage() {
   useEffect(() => {
     const handleVerification = async () => {
       try {
-        // Check if URL contains verification token from email link
-        // Supabase sends: /verify#access_token=xxx&type=email&refresh_token=xxx
-        const hash = window.location.hash;
-        const hasToken = hash.includes("access_token") && hash.includes("type=email");
-        
-        if (!hasToken) {
-          // No valid token in URL - user tried to access page directly
-          setStatus("error");
-          setMessage(
-            "Invalid verification link. Please click the link sent to your email to confirm your account."
-          );
-          return;
-        }
-
-        // Get the session - Supabase automatically processes the token from URL
+        // Supabase PKCE flow: token processing happens on Supabase's server
+        // We just need to check if the session is established
         const {
           data: { session },
           error: sessionError,
@@ -47,11 +34,13 @@ export default function VerifyPage() {
         }
 
         if (session && session.user) {
-          // User is verified with valid session tied to their account
+          // User is verified with valid session
           setStatus("success");
-          setMessage("Your email was successfully verified!");
+          setMessage(
+            "Your account has been officially verified! If you're already approved, feel free to begin shopping. If you need assistance with approval, contact our support team."
+          );
         } else {
-          // Token was present but didn't create a valid session
+          // No session found
           setStatus("error");
           setMessage(
             "Verification link has expired or is invalid. Please try signing up again."
@@ -118,7 +107,7 @@ export default function VerifyPage() {
                 </div>
               </div>
               <h2 className="text-xl font-display font-bold text-green-400 text-center mb-2">
-                Email Verified!
+                Account Verified! ✓
               </h2>
               <p className="text-brand-cream-muted text-center text-sm mb-6">
                 {message}
@@ -131,8 +120,14 @@ export default function VerifyPage() {
                   Sign In to Your Account
                 </Link>
                 <Link
-                  href="/"
+                  href="/contact"
                   className="block w-full text-center px-4 py-3 border border-brand-green text-brand-green font-semibold rounded-lg hover:bg-brand-green/10 transition-colors"
+                >
+                  Click Here for Approval Assistance
+                </Link>
+                <Link
+                  href="/"
+                  className="block w-full text-center px-4 py-3 text-brand-cream-muted hover:text-brand-cream transition-colors"
                 >
                   Return Home
                 </Link>
