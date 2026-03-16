@@ -16,19 +16,16 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const { addItem, isWholesaleMode } = useCart();
+  const { addItem, isSmokeShopWholesaleMode } = useCart();
 
-  // Determine which price to use
-  // Priority: smoke shop wholesale > regular wholesale > retail
+  // Determine which price to use based on context
   let basePrice = product.price_retail;
   let priceLabel = "";
   
+  // Smoke shop wholesale products ONLY use smoke shop wholesale pricing
   if (product.is_smokeshop_wholesale && product.price_smokeshop_wholesale) {
     basePrice = product.price_smokeshop_wholesale;
     priceLabel = "Smoke Shop Wholesale";
-  } else if (isWholesaleMode && product.price_wholesale) {
-    basePrice = product.price_wholesale;
-    priceLabel = "Wholesale Price";
   }
 
   // Parse variants if they exist

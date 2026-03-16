@@ -46,6 +46,7 @@ export interface Database {
           is_admin: boolean;
           is_wholesale_approved: boolean;      // Wholesale access toggle
           is_wholesale: boolean;               // Currently shopping in wholesale mode
+          is_smokeshop_wholesale: boolean;     // Has smoke shop wholesale access
           is_affiliate: boolean;               // Has an affiliate account
           affiliate_code: string | null;       // Their unique discount code
           affiliate_earnings: number;          // Accrued unpaid earnings (cents)
@@ -66,6 +67,7 @@ export interface Database {
           is_admin?: boolean;
           is_wholesale_approved?: boolean;
           is_wholesale?: boolean;
+          is_smokeshop_wholesale?: boolean;
           is_affiliate?: boolean;
           affiliate_code?: string | null;
           affiliate_earnings?: number;
@@ -99,6 +101,7 @@ export interface Database {
           stock_quantity: number;
           is_active: boolean;                  // Visible on site
           is_featured: boolean;                // Show in featured section
+          is_smokeshop_wholesale: boolean;     // Exclusive to smoke shop wholesale page
           images: string[];                    // Array of Supabase Storage URLs
           video_url: string | null;            // Product video URL
           model_url: string | null;            // 3D model URL (.glb)
@@ -111,6 +114,7 @@ export interface Database {
           has_variants: boolean;               // Does this product have variants
           variants: Json | null;               // Array of product variants with images and options
           is_hidden: boolean;                  // Hidden from website completely
+          price_smokeshop_wholesale: number | null;  // Smoke shop wholesale price in cents (ONLY field used if is_smokeshop_wholesale=true)
           average_rating: number;              // Computed from reviews (0–5)
           review_count: number;
           created_at: string;
@@ -131,6 +135,7 @@ export interface Database {
           stock_quantity?: number;
           is_active?: boolean;
           is_featured?: boolean;
+          is_smokeshop_wholesale?: boolean;
           images?: string[];
           video_url?: string | null;
           model_url?: string | null;
@@ -143,6 +148,7 @@ export interface Database {
           has_variants?: boolean;
           variants?: Json | null;
           is_hidden?: boolean;
+          price_smokeshop_wholesale?: number | null;
           average_rating?: number;
           review_count?: number;
           created_at?: string;

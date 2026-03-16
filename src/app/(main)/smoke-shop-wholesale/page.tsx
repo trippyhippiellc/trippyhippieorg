@@ -53,7 +53,7 @@ export default function SmokeShopWholesalePage() {
           .from("profiles")
           .select("is_smokeshop_wholesale")
           .eq("id", user.id)
-          .single();
+          .single() as any;
 
         if (error) {
           console.error("Error checking smoke shop wholesale status:", error);
@@ -61,8 +61,8 @@ export default function SmokeShopWholesalePage() {
           return;
         }
 
-        const hasAccess = isAdmin || data?.is_smokeshop_wholesale === true;
-        setIsSmokeShopWholesale(data?.is_smokeshop_wholesale === true);
+        const hasAccess = isAdmin || (data as any)?.is_smokeshop_wholesale === true;
+        setIsSmokeShopWholesale((data as any)?.is_smokeshop_wholesale === true);
         setAuthorized(hasAccess);
       } catch (err) {
         console.error("Error checking authorization:", err);

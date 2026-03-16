@@ -99,6 +99,8 @@ interface DBProduct {
   images:               string[];
   is_active:            boolean;
   is_featured:          boolean;
+  is_smokeshop_wholesale: boolean;            // Smoke shop wholesale exclusive
+  price_smokeshop_wholesale: number | null;   // Smoke shop wholesale price
   tags:                 string[];
   state_restrictions:   string[] | null;
   bulk_tiers:           BulkTier[];
@@ -227,10 +229,21 @@ export default function AdminProductsPage() {
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim())         { toast.error("Product name is required.");        return; }
-    if (!form.price_retail.trim()) { toast.error("Retail price is required.");        return; }
     if (!form.slug.trim())         { toast.error("Slug is required.");                return; }
-    const retailCents = Math.round(parseFloat(form.price_retail) * 100);
-    if (isNaN(retailCents) || retailCents <= 0) { toast.error("Retail price must be a positive number."); return; }
+    
+    // Validation depends on whether this is a smoke shop wholesale product
+    if (form.is_smokeshop_wholesale) {
+      // For smoke shop wholesale products, ONLY smokeshop price is required
+      if (!form.price_smokeshop_wholesale.trim()) { toast.error("Smokeshop Wholesale Price is required for smoke shop products."); return; }
+      const smokeshopCents = Math.round(parseFloat(form.price_smokeshop_wholesale) * 100);
+      if (isNaN(smokeshopCents) || smokeshopCents <= 0) { toast.error("Smokeshop Wholesale Price must be a positive number."); return; }
+    } else {
+      // For regular products, retail price is required
+      if (!form.price_retail.trim()) { toast.error("Retail price is required.");        return; }
+      const retailCents = Math.round(parseFloat(form.price_retail) * 100);
+      if (isNaN(retailCents) || retailCents <= 0) { toast.error("Retail price must be a positive number."); return; }
+    }
+    
     setSaving(true);
     const finalSlug = makeSlug(form.slug);
     
@@ -246,9 +259,9 @@ export default function AdminProductsPage() {
       description:          form.description.trim() || null,
       category:             form.category,
       strain_type:          form.strain_type || null,
-      price_retail:         retailCents,
-      price_wholesale:      form.price_wholesale ? Math.round(parseFloat(form.price_wholesale) * 100) : null,
-      price_compare:        form.price_compare   ? Math.round(parseFloat(form.price_compare)   * 100) : null,
+      price_retail:         form.is_smokeshop_wholesale ? 0 : Math.round(parseFloat(form.price_retail) * 100),
+      price_wholesale:      form.is_smokeshop_wholesale ? 0 : (form.price_wholesale ? Math.round(parseFloat(form.price_wholesale) * 100) : 0),
+      price_compare:        form.is_smokeshop_wholesale ? null : (form.price_compare ? Math.round(parseFloat(form.price_compare) * 100) : null),
       buy_cost:             form.buy_cost ? Math.round(parseFloat(form.buy_cost) * 100) : null,
       stock_quantity:       calculatedStock,
       thca_percentage:      form.thca_percentage ? parseFloat(form.thca_percentage) : null,
@@ -456,13 +469,18 @@ export default function AdminProductsPage() {
 
             <div>
               <p className="text-sm font-medium text-brand-cream-muted mb-3">Pricing (enter in dollars, e.g. 25.00)</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Input label="Buy Cost ($)"         type="number" step="0.01" min="0" value={form.buy_cost}        onChange={e => setField("buy_cost",        e.target.value)} placeholder="12.00" />
-                <Input label="Retail Price ($) *"   type="number" step="0.01" min="0" value={form.price_retail}    onChange={e => setField("price_retail",    e.target.value)} placeholder="25.00" required />
-                <Input label="Wholesale Price ($)"  type="number" step="0.01" min="0" value={form.price_wholesale} onChange={e => setField("price_wholesale", e.target.value)} placeholder="18.00" />
-                <Input label="Compare-At Price ($)" type="number" step="0.01" min="0" value={form.price_compare}   onChange={e => setField("price_compare",   e.target.value)} placeholder="32.00" />
-                {form.is_smokeshop_wholesale && (<Input label="Smokeshop Wholesale Price ($)" type="number" step="0.01" min="0" value={form.price_smokeshop_wholesale} onChange={e => setField("price_smokeshop_wholesale", e.target.value)} placeholder="15.00" required={form.is_smokeshop_wholesale} />)}
-              </div>
+              {form.is_smokeshop_wholesale ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Input label="Smokeshop Wholesale Price ($) *" type="number" step="0.01" min="0" value={form.price_smokeshop_wholesale} onChange={e => setField("price_smokeshop_wholesale", e.target.value)} placeholder="15.00" required={form.is_smokeshop_wholesale} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Input label="Buy Cost ($)"         type="number" step="0.01" min="0" value={form.buy_cost}        onChange={e => setField("buy_cost",        e.target.value)} placeholder="12.00" />
+                  <Input label="Retail Price ($) *"   type="number" step="0.01" min="0" value={form.price_retail}    onChange={e => setField("price_retail",    e.target.value)} placeholder="25.00" required />
+                  <Input label="Wholesale Price ($)"  type="number" step="0.01" min="0" value={form.price_wholesale} onChange={e => setField("price_wholesale", e.target.value)} placeholder="18.00" />
+                  <Input label="Compare-At Price ($)" type="number" step="0.01" min="0" value={form.price_compare}   onChange={e => setField("price_compare",   e.target.value)} placeholder="32.00" />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
